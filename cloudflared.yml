@@ -1,0 +1,7 @@
+tunnel: d3af94de-9656-4ca5-aa40-b4c4dea64673
+credentials-file: /Users/quatton/.cloudflared/d3af94de-9656-4ca5-aa40-b4c4dea64673.json
+
+ingress:
+  - hostname: tower.qttn.dev
+    service: http://localhost:3022
+  - service: http_status:404

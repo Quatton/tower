@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "react",
+    "react-perf",
+    "typescript",
+    "node",
+    "jsx-a11y",
+    "promise",
+    "eslint"
+  ],
+  "rules": {
+    "unused-imports/no-unused-imports": "warn",
+    "aria-role": "off"
+  }
+}
