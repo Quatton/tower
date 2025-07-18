@@ -73,30 +73,43 @@ export class Game extends Scene {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
-    // Base the scale on the smaller dimension to ensure everything fits
-    const minDimension = Math.min(width, height);
-
-    // For landscape orientation, also consider width constraints
+    // Check if this is likely a mobile device (small screen)
+    const isMobile = width < 768 || height < 768;
     const isLandscape = width > height;
 
-    if (isLandscape) {
-      // In landscape, we have more horizontal space but less vertical
-      this.scaleFactor = Math.min(
-        width / 1024, // Base width assumption
-        height / 600, // Minimum height needed
-        minDimension / 400,
-      );
+    if (isMobile) {
+      // Be more generous with scaling on mobile devices
+      if (isLandscape) {
+        // Mobile landscape: prioritize using full width, allow tighter spacing
+        this.scaleFactor = Math.min(
+          width / 750,  // More lenient width requirement
+          height / 400, // Minimum height for towers
+        );
+      } else {
+        // Mobile portrait: use more of the available space
+        this.scaleFactor = Math.min(
+          width / 450,  // Allow towers to be closer together
+          height / 600, // Use more vertical space
+        );
+      }
+      // Higher minimum scale for mobile for better usability
+      this.scaleFactor = Math.max(0.6, Math.min(this.scaleFactor, 1.8));
     } else {
-      // In portrait, stack towers vertically or adjust layout
-      this.scaleFactor = Math.min(
-        width / 600, // Minimum width for 3 towers
-        height / 800, // More height available in portrait
-        minDimension / 400,
-      );
+      // Desktop/tablet scaling (original logic but more generous)
+      if (isLandscape) {
+        this.scaleFactor = Math.min(
+          width / 900,  // Less conservative than before
+          height / 500,
+        );
+      } else {
+        this.scaleFactor = Math.min(
+          width / 550,
+          height / 700,
+        );
+      }
+      // Standard minimum scale for larger devices
+      this.scaleFactor = Math.max(0.4, Math.min(this.scaleFactor, 2.0));
     }
-
-    // Ensure minimum scale for usability
-    this.scaleFactor = Math.max(0.3, Math.min(this.scaleFactor, 2.0));
   }
 
   private handleResize() {
@@ -148,14 +161,26 @@ export class Game extends Scene {
 
   private getTowerSpacing(): number {
     const width = this.cameras.main.width;
-    const isLandscape = width > this.cameras.main.height;
+    const height = this.cameras.main.height;
+    const isMobile = width < 768 || height < 768;
+    const isLandscape = width > height;
 
-    if (isLandscape) {
-      // In landscape, spread towers horizontally
-      return Math.min(250 * this.scaleFactor, width / 4);
+    if (isMobile) {
+      // On mobile, use more of the available width
+      if (isLandscape) {
+        // Mobile landscape: tighter spacing, use more screen width
+        return Math.min(200 * this.scaleFactor, width / 3.2);
+      } else {
+        // Mobile portrait: even tighter spacing
+        return Math.min(160 * this.scaleFactor, width / 3.5);
+      }
     } else {
-      // In portrait, reduce spacing or stack differently
-      return Math.min(200 * this.scaleFactor, width / 4);
+      // Desktop/tablet spacing
+      if (isLandscape) {
+        return Math.min(250 * this.scaleFactor, width / 4);
+      } else {
+        return Math.min(200 * this.scaleFactor, width / 4);
+      }
     }
   }
 
