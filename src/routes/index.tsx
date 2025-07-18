@@ -11,10 +11,14 @@ const PhaserGame = lazy(() =>
 
 export default function Home() {
   return (
-    <main className="h-dvh">
-      <ClientOnly>
-        <PhaserGame />
-      </ClientOnly>
+    <main className="h-dvh w-full overflow-hidden">
+      <div className="flex h-full w-full items-center justify-center bg-gray-100">
+        <div className="h-full max-h-screen w-full max-w-7xl">
+          <ClientOnly>
+            <PhaserGame />
+          </ClientOnly>
+        </div>
+      </div>
     </main>
   );
 }

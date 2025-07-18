@@ -16,10 +16,11 @@ export class Game extends Scene {
   private moveCount: number = 0;
   private moveText!: Phaser.GameObjects.Text;
   private winText!: Phaser.GameObjects.Text;
-  private readonly TOWER_WIDTH = 200;
-  private readonly TOWER_HEIGHT = 20;
-  private readonly POLE_HEIGHT = 200;
-  private readonly DISC_HEIGHT = 20;
+  private scaleFactor: number = 1;
+  private readonly BASE_TOWER_WIDTH = 160;
+  private readonly BASE_TOWER_HEIGHT = 16;
+  private readonly BASE_POLE_HEIGHT = 160;
+  private readonly BASE_DISC_HEIGHT = 16;
   private readonly DISC_COLORS = [
     0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff,
   ];
@@ -31,67 +32,179 @@ export class Game extends Scene {
   preload() {}
 
   create() {
-    this.cameras.main.setBackgroundColor(0x2c3e50);
+    this.cameras.main.setBackgroundColor(~0);
+
+    // Calculate responsive scale factor
+    this.calculateScaleFactor();
 
     // Setup towers
     this.createTowers();
     this.createDiscs(4); // Start with 4 discs
 
     // UI
-    this.moveText = this.add.text(10, 10, "Moves: 0", {
-      fontSize: "24px",
-      color: "#ffffff",
-    });
+    const fontSize = Math.max(16, 24 * this.scaleFactor);
+    this.moveText = this.add.text(
+      10 * this.scaleFactor,
+      10 * this.scaleFactor,
+      "Moves: 0",
+      {
+        fontSize: `${fontSize}px`,
+        color: "#000000",
+      },
+    );
 
     this.winText = this.add
-      .text(400, 100, "", {
-        fontSize: "32px",
-        color: "#00ff00",
+      .text(this.cameras.main.centerX, this.cameras.main.height * 0.15, "", {
+        fontSize: `${Math.max(20, 32 * this.scaleFactor)}px`,
+        color: "#000000",
       })
       .setOrigin(0.5);
 
     // Input handling
     this.input.on("pointerdown", this.handleClick, this);
 
+    // Handle resize events
+    this.scale.on("resize", this.handleResize, this);
+
     EventBus.emit("current-scene-ready", this);
+  }
+
+  private calculateScaleFactor() {
+    const width = this.cameras.main.width;
+    const height = this.cameras.main.height;
+
+    // Base the scale on the smaller dimension to ensure everything fits
+    const minDimension = Math.min(width, height);
+
+    // For landscape orientation, also consider width constraints
+    const isLandscape = width > height;
+
+    if (isLandscape) {
+      // In landscape, we have more horizontal space but less vertical
+      this.scaleFactor = Math.min(
+        width / 1024, // Base width assumption
+        height / 600, // Minimum height needed
+        minDimension / 400,
+      );
+    } else {
+      // In portrait, stack towers vertically or adjust layout
+      this.scaleFactor = Math.min(
+        width / 600, // Minimum width for 3 towers
+        height / 800, // More height available in portrait
+        minDimension / 400,
+      );
+    }
+
+    // Ensure minimum scale for usability
+    this.scaleFactor = Math.max(0.3, Math.min(this.scaleFactor, 2.0));
+  }
+
+  private handleResize() {
+    this.calculateScaleFactor();
+
+    // Clear existing objects
+    this.towerBases.forEach((base) => base.destroy());
+    this.towerPoles.forEach((pole) => pole.destroy());
+    this.towers.forEach((tower) => {
+      tower.forEach((disc) => disc.graphics.destroy());
+    });
+
+    // Reset arrays
+    this.towerBases = [];
+    this.towerPoles = [];
+    this.towers = [[], [], []];
+    this.selectedDisc = null;
+    this.selectedTower = -1;
+
+    // Recreate everything with new scale
+    this.createTowers();
+    this.createDiscs(4);
+
+    // Update UI positions
+    const fontSize = Math.max(16, 24 * this.scaleFactor);
+    this.moveText.setPosition(10 * this.scaleFactor, 10 * this.scaleFactor);
+    this.moveText.setStyle({ fontSize: `${fontSize}px` });
+
+    this.winText.setPosition(
+      this.cameras.main.centerX,
+      this.cameras.main.height * 0.15,
+    );
+    this.winText.setStyle({
+      fontSize: `${Math.max(20, 32 * this.scaleFactor)}px`,
+    });
+  }
+
+  private getResponsiveDimensions() {
+    return {
+      towerWidth: this.BASE_TOWER_WIDTH * this.scaleFactor,
+      towerHeight: this.BASE_TOWER_HEIGHT * this.scaleFactor,
+      poleHeight: this.BASE_POLE_HEIGHT * this.scaleFactor,
+      discHeight: this.BASE_DISC_HEIGHT * this.scaleFactor,
+      poleWidth: Math.max(6, 10 * this.scaleFactor),
+      marginBottom: Math.max(50, 100 * this.scaleFactor),
+      towerSpacing: this.getTowerSpacing(),
+    };
+  }
+
+  private getTowerSpacing(): number {
+    const width = this.cameras.main.width;
+    const isLandscape = width > this.cameras.main.height;
+
+    if (isLandscape) {
+      // In landscape, spread towers horizontally
+      return Math.min(250 * this.scaleFactor, width / 4);
+    } else {
+      // In portrait, reduce spacing or stack differently
+      return Math.min(200 * this.scaleFactor, width / 4);
+    }
   }
 
   private createTowers() {
     const centerX = this.cameras.main.width / 2;
-    const baseY = this.cameras.main.height - 100;
+    const dimensions = this.getResponsiveDimensions();
+    const baseY = this.cameras.main.height - dimensions.marginBottom;
 
     for (let i = 0; i < 3; i++) {
-      const towerX = centerX + (i - 1) * 250;
+      const towerX = centerX + (i - 1) * dimensions.towerSpacing;
 
       // Create tower base
       const base = this.add.graphics();
       base.fillStyle(0x8b4513);
       base.fillRect(
-        towerX - this.TOWER_WIDTH / 2,
+        towerX - dimensions.towerWidth / 2,
         baseY,
-        this.TOWER_WIDTH,
-        this.TOWER_HEIGHT,
+        dimensions.towerWidth,
+        dimensions.towerHeight,
       );
       this.towerBases.push(base);
 
       // Create tower pole
       const pole = this.add.graphics();
       pole.fillStyle(0x654321);
-      pole.fillRect(towerX - 5, baseY - this.POLE_HEIGHT, 10, this.POLE_HEIGHT);
+      pole.fillRect(
+        towerX - dimensions.poleWidth / 2,
+        baseY - dimensions.poleHeight,
+        dimensions.poleWidth,
+        dimensions.poleHeight,
+      );
       this.towerPoles.push(pole);
     }
   }
 
   private createDiscs(numDiscs: number) {
     const centerX = this.cameras.main.width / 2;
-    const baseY = this.cameras.main.height - 100 - this.TOWER_HEIGHT;
-    const leftTowerX = centerX - 250;
+    const dimensions = this.getResponsiveDimensions();
+    const baseY =
+      this.cameras.main.height -
+      dimensions.marginBottom -
+      dimensions.towerHeight;
+    const leftTowerX = centerX - dimensions.towerSpacing;
 
     // Create discs on the leftmost tower
     for (let i = 0; i < numDiscs; i++) {
       const discSize = numDiscs - i; // Largest disc at bottom
-      const discWidth = 40 + discSize * 30;
-      const discY = baseY - i * this.DISC_HEIGHT;
+      const discWidth = (30 + discSize * 25) * this.scaleFactor;
+      const discY = baseY - i * dimensions.discHeight;
 
       const disc = this.add.graphics();
       const color = this.DISC_COLORS[i % this.DISC_COLORS.length];
@@ -100,18 +213,18 @@ export class Game extends Scene {
       }
       disc.fillRoundedRect(
         -discWidth / 2,
-        -this.DISC_HEIGHT / 2,
+        -dimensions.discHeight / 2,
         discWidth,
-        this.DISC_HEIGHT,
-        5,
+        dimensions.discHeight,
+        5 * this.scaleFactor,
       );
       disc.setPosition(leftTowerX, discY);
       disc.setInteractive(
         new Phaser.Geom.Rectangle(
           -discWidth / 2,
-          -this.DISC_HEIGHT / 2,
+          -dimensions.discHeight / 2,
           discWidth,
-          this.DISC_HEIGHT,
+          dimensions.discHeight,
         ),
         Phaser.Geom.Rectangle.Contains,
       );
@@ -139,12 +252,17 @@ export class Game extends Scene {
 
   private handleClick(pointer: Phaser.Input.Pointer) {
     const centerX = this.cameras.main.width / 2;
+    const dimensions = this.getResponsiveDimensions();
 
     // Determine which tower was clicked
     let clickedTower = -1;
     for (let i = 0; i < 3; i++) {
-      const towerX = centerX + (i - 1) * 250;
-      if (Math.abs(pointer.x - towerX) < 125) {
+      const towerX = centerX + (i - 1) * dimensions.towerSpacing;
+      const clickZone = Math.max(
+        100 * this.scaleFactor,
+        dimensions.towerSpacing / 2,
+      );
+      if (Math.abs(pointer.x - towerX) < clickZone) {
         clickedTower = i;
         break;
       }
@@ -172,14 +290,18 @@ export class Game extends Scene {
     this.selectedTower = towerIndex;
 
     // Visual feedback
-    topDisc.graphics.lineStyle(3, 0xffffff);
+    const dimensions = this.getResponsiveDimensions();
+    const strokeWidth = Math.max(2, 3 * this.scaleFactor);
+    const highlightSize = Math.max(40, 60 * this.scaleFactor);
+
+    topDisc.graphics.lineStyle(strokeWidth, 0xffffff);
     topDisc.graphics.strokeRect(
-      -50,
-      -this.DISC_HEIGHT / 2,
-      100,
-      this.DISC_HEIGHT,
+      -highlightSize,
+      -dimensions.discHeight / 2,
+      highlightSize * 2,
+      dimensions.discHeight,
     );
-    topDisc.graphics.y -= 10; // Lift the disc slightly
+    topDisc.graphics.y -= 10 * this.scaleFactor; // Lift the disc slightly
   }
 
   private moveDiscToTower(targetTower: number) {
@@ -204,9 +326,14 @@ export class Game extends Scene {
 
     // Calculate new position
     const centerX = this.cameras.main.width / 2;
-    const baseY = this.cameras.main.height - 100 - this.TOWER_HEIGHT;
-    const targetX = centerX + (targetTower - 1) * 250;
-    const targetY = baseY - (targetTowerArray.length - 1) * this.DISC_HEIGHT;
+    const dimensions = this.getResponsiveDimensions();
+    const baseY =
+      this.cameras.main.height -
+      dimensions.marginBottom -
+      dimensions.towerHeight;
+    const targetX = centerX + (targetTower - 1) * dimensions.towerSpacing;
+    const targetY =
+      baseY - (targetTowerArray.length - 1) * dimensions.discHeight;
 
     // Animate the move
     this.tweens.add({
@@ -257,17 +384,18 @@ export class Game extends Scene {
       this.selectedDisc.graphics.clear();
       // Redraw the disc
       const discSize = this.selectedDisc.size;
-      const discWidth = 40 + discSize * 30;
+      const discWidth = (30 + discSize * 25) * this.scaleFactor;
+      const dimensions = this.getResponsiveDimensions();
       const color = this.DISC_COLORS[(4 - discSize) % this.DISC_COLORS.length];
       if (color) {
         this.selectedDisc.graphics.fillStyle(color);
       }
       this.selectedDisc.graphics.fillRoundedRect(
         -discWidth / 2,
-        -this.DISC_HEIGHT / 2,
+        -dimensions.discHeight / 2,
         discWidth,
-        this.DISC_HEIGHT,
-        5,
+        dimensions.discHeight,
+        5 * this.scaleFactor,
       );
       this.selectedDisc = null;
       this.selectedTower = -1;

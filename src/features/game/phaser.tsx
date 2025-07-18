@@ -14,6 +14,7 @@ interface IProps {
 export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
   function PhaserGame({ currentActiveScene }, ref) {
     const game = useRef<Phaser.Game | null>(null!);
+    const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const getContainerSize = () => {
       const parent = document.getElementById("game-container");
@@ -27,11 +28,31 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
     };
 
     const handleResize = () => {
-      if (!game.current || !parent) return;
+      if (!game.current) return;
 
-      const { width: newWidth, height: newHeight } = getContainerSize();
+      // Debounce resize to avoid too many calls during orientation change
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
 
-      game.current.scale.resize(newWidth, newHeight);
+      resizeTimeoutRef.current = setTimeout(() => {
+        const { width: newWidth, height: newHeight } = getContainerSize();
+
+        // Update the game scale
+        game.current!.scale.resize(newWidth, newHeight);
+
+        // Force a scene refresh for responsive updates
+        const currentScene = game.current!.scene.getScene("Game");
+        if (currentScene && currentScene.scene.isActive()) {
+          // Trigger resize event on the scene if it has a handleResize method
+          if (
+            "handleResize" in currentScene &&
+            typeof currentScene.handleResize === "function"
+          ) {
+            currentScene.handleResize();
+          }
+        }
+      }, 150);
     };
 
     useLayoutEffect(() => {
@@ -62,6 +83,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
 
     useEffect(() => {
       window.addEventListener("resize", handleResize);
+      window.addEventListener("orientationchange", handleResize);
 
       EventBus.on("current-scene-ready", (scene_instance: Phaser.Scene) => {
         if (currentActiveScene && typeof currentActiveScene === "function") {
@@ -77,6 +99,10 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
 
       return () => {
         window.removeEventListener("resize", handleResize);
+        window.removeEventListener("orientationchange", handleResize);
+        if (resizeTimeoutRef.current) {
+          clearTimeout(resizeTimeoutRef.current);
+        }
         EventBus.removeListener("current-scene-ready");
       };
     }, [currentActiveScene, ref]);

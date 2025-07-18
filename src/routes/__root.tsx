@@ -20,10 +20,28 @@ export const Route = createRootRoute({
       },
       {
         name: "viewport",
-        content: "width=device-width, initial-scale=1",
+        content:
+          "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
       },
       {
-        title: "Careear",
+        title: "Tower of Hanoi - Interactive Puzzle Game",
+      },
+      {
+        name: "description",
+        content:
+          "Play the classic Tower of Hanoi puzzle game. Move all discs from the left tower to the right tower following the rules. Responsive design works on all devices.",
+      },
+      {
+        name: "apple-mobile-web-app-capable",
+        content: "yes",
+      },
+      {
+        name: "apple-mobile-web-app-status-bar-style",
+        content: "black-translucent",
+      },
+      {
+        name: "mobile-web-app-capable",
+        content: "yes",
       },
     ],
     links: [
