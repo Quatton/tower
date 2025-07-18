@@ -1,10 +1,4 @@
-import {
-  forwardRef,
-  useEffect,
-  useRef,
-  useCallback,
-  useLayoutEffect,
-} from "react";
+import { forwardRef, useEffect, useRef, useLayoutEffect } from "react";
 import StartGame from "./main";
 import { EventBus } from "./event";
 
