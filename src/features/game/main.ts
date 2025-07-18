@@ -10,8 +10,8 @@ const config: Types.Core.GameConfig = {
   scene: [MainGame],
 };
 
-const StartGame = (parent: string) => {
-  return new Game({ ...config, parent });
+const StartGame = ({ ...overrides }: Partial<Types.Core.GameConfig>) => {
+  return new Game({ ...config, ...overrides });
 };
 
 export default StartGame;
