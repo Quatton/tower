@@ -23,8 +23,8 @@ export class Game extends Scene {
   private readonly BASE_POLE_HEIGHT = 160;
   private readonly BASE_DISC_HEIGHT = 16;
   private readonly DISC_COLORS = [
-    0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff,
-    0x00ffff, 0xff8000, 0x8000ff, 0x80ff00, 0xff0080,
+    0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xff8000,
+    0x8000ff, 0x80ff00, 0xff0080,
   ];
 
   constructor(numDiscs: number = 4) {
@@ -416,7 +416,8 @@ export class Game extends Scene {
       const discSize = this.selectedDisc.size;
       const discWidth = (30 + discSize * 25) * this.scaleFactor;
       const dimensions = this.getResponsiveDimensions();
-      const color = this.DISC_COLORS[(this.numDiscs - discSize) % this.DISC_COLORS.length];
+      const color =
+        this.DISC_COLORS[(this.numDiscs - discSize) % this.DISC_COLORS.length];
       if (color) {
         this.selectedDisc.graphics.fillStyle(color);
       }
