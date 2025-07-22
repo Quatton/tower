@@ -316,6 +316,12 @@ export class Game extends Scene {
     const topDisc = tower[tower.length - 1];
     if (!topDisc) return;
 
+    // If this disc is already selected, don't do anything
+    if (this.selectedDisc === topDisc) return;
+
+    // Deselect any previously selected disc first
+    this.deselectDisc();
+
     this.selectedDisc = topDisc;
     this.selectedTower = towerIndex;
 
@@ -331,7 +337,16 @@ export class Game extends Scene {
       highlightSize * 2,
       dimensions.discHeight,
     );
-    topDisc.graphics.y -= 10 * this.scaleFactor; // Lift the disc slightly
+
+    // Animate disc to top-center of screen
+    const targetY = Math.max(50, 80 * this.scaleFactor); // Top of screen with some padding
+    this.tweens.add({
+      targets: topDisc.graphics,
+      x: this.cameras.main.centerX,
+      y: targetY,
+      duration: 200,
+      ease: "Power2",
+    });
   }
 
   private moveDiscToTower(targetTower: number) {
@@ -410,24 +425,57 @@ export class Game extends Scene {
   }
 
   private deselectDisc() {
-    if (this.selectedDisc) {
-      this.selectedDisc.graphics.clear();
-      // Redraw the disc
-      const discSize = this.selectedDisc.size;
-      const discWidth = (30 + discSize * 25) * this.scaleFactor;
-      const dimensions = this.getResponsiveDimensions();
-      const color =
-        this.DISC_COLORS[(this.numDiscs - discSize) % this.DISC_COLORS.length];
-      if (color) {
-        this.selectedDisc.graphics.fillStyle(color);
+    if (this.selectedDisc && this.selectedTower !== -1) {
+      // Find the correct position for this disc in its current tower
+      const currentTower = this.towers[this.selectedTower];
+      if (currentTower) {
+        const discIndex = currentTower.indexOf(this.selectedDisc);
+        if (discIndex !== -1) {
+          // Calculate correct position
+          const centerX = this.cameras.main.width / 2;
+          const dimensions = this.getResponsiveDimensions();
+          const baseY =
+            this.cameras.main.height -
+            dimensions.marginBottom -
+            dimensions.towerHeight;
+          const correctX =
+            centerX + (this.selectedTower - 1) * dimensions.towerSpacing;
+          const correctY = baseY - discIndex * dimensions.discHeight;
+
+          // Animate back to correct position
+          this.tweens.add({
+            targets: this.selectedDisc.graphics,
+            x: correctX,
+            y: correctY,
+            duration: 200,
+            ease: "Power2",
+            onComplete: () => {
+              if (this.selectedDisc) {
+                // Clear and redraw the disc without selection highlight
+                this.selectedDisc.graphics.clear();
+                const discSize = this.selectedDisc.size;
+                const discWidth = (30 + discSize * 25) * this.scaleFactor;
+                const dimensions = this.getResponsiveDimensions();
+                const color =
+                  this.DISC_COLORS[
+                    (this.numDiscs - discSize) % this.DISC_COLORS.length
+                  ];
+                if (color) {
+                  this.selectedDisc.graphics.fillStyle(color);
+                }
+                this.selectedDisc.graphics.fillRoundedRect(
+                  -discWidth / 2,
+                  -dimensions.discHeight / 2,
+                  discWidth,
+                  dimensions.discHeight,
+                  5 * this.scaleFactor,
+                );
+              }
+            },
+          });
+        }
       }
-      this.selectedDisc.graphics.fillRoundedRect(
-        -discWidth / 2,
-        -dimensions.discHeight / 2,
-        discWidth,
-        dimensions.discHeight,
-        5 * this.scaleFactor,
-      );
+
       this.selectedDisc = null;
       this.selectedTower = -1;
     }
