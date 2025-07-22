@@ -9,10 +9,11 @@ export interface IRefPhaserGame {
 
 interface IProps {
   currentActiveScene?: (scene_instance: Phaser.Scene) => void;
+  numDiscs?: number;
 }
 
 export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
-  function PhaserGame({ currentActiveScene }, ref) {
+  function PhaserGame({ currentActiveScene, numDiscs = 4 }, ref) {
     const game = useRef<Phaser.Game | null>(null!);
     const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -62,12 +63,19 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
           parent: "game-container",
           width: gameWidth,
           height: gameHeight,
+          numDiscs,
         });
 
         if (typeof ref === "function") {
           ref({ game: game.current, scene: null });
         } else if (ref) {
           ref.current = { game: game.current, scene: null };
+        }
+      } else {
+        // If game exists and numDiscs changed, restart the scene
+        const currentScene = game.current.scene.getScene("Game");
+        if (currentScene && "setNumDiscs" in currentScene) {
+          (currentScene as any).setNumDiscs(numDiscs);
         }
       }
 
@@ -79,7 +87,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
           }
         }
       };
-    }, [ref]);
+    }, [ref, numDiscs]);
 
     useEffect(() => {
       window.addEventListener("resize", handleResize);

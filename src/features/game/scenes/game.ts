@@ -17,16 +17,19 @@ export class Game extends Scene {
   private moveText!: Phaser.GameObjects.Text;
   private winText!: Phaser.GameObjects.Text;
   private scaleFactor: number = 1;
+  private numDiscs: number = 4; // Dynamic number of discs
   private readonly BASE_TOWER_WIDTH = 160;
   private readonly BASE_TOWER_HEIGHT = 16;
   private readonly BASE_POLE_HEIGHT = 160;
   private readonly BASE_DISC_HEIGHT = 16;
   private readonly DISC_COLORS = [
     0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff,
+    0x00ffff, 0xff8000, 0x8000ff, 0x80ff00, 0xff0080,
   ];
 
-  constructor() {
+  constructor(numDiscs: number = 4) {
     super("Game");
+    this.numDiscs = Math.max(1, Math.min(10, numDiscs)); // Limit between 1 and 10 discs
   }
 
   preload() {}
@@ -39,7 +42,7 @@ export class Game extends Scene {
 
     // Setup towers
     this.createTowers();
-    this.createDiscs(4); // Start with 4 discs
+    this.createDiscs(this.numDiscs); // Use dynamic number of discs
 
     // UI
     const fontSize = Math.max(16, 24 * this.scaleFactor);
@@ -128,7 +131,7 @@ export class Game extends Scene {
 
     // Recreate everything with new scale
     this.createTowers();
-    this.createDiscs(4);
+    this.createDiscs(this.numDiscs);
 
     // Update UI positions
     const fontSize = Math.max(16, 24 * this.scaleFactor);
@@ -413,7 +416,7 @@ export class Game extends Scene {
       const discSize = this.selectedDisc.size;
       const discWidth = (30 + discSize * 25) * this.scaleFactor;
       const dimensions = this.getResponsiveDimensions();
-      const color = this.DISC_COLORS[(4 - discSize) % this.DISC_COLORS.length];
+      const color = this.DISC_COLORS[(this.numDiscs - discSize) % this.DISC_COLORS.length];
       if (color) {
         this.selectedDisc.graphics.fillStyle(color);
       }
@@ -432,7 +435,7 @@ export class Game extends Scene {
   private checkWinCondition() {
     // Win condition: all discs are on the rightmost tower
     const rightTower = this.towers[2];
-    if (rightTower && rightTower.length === 4) {
+    if (rightTower && rightTower.length === this.numDiscs) {
       this.winText.setText(
         `You Won!\nMoves: ${this.moveCount}\nClick to restart`,
       );
@@ -441,5 +444,34 @@ export class Game extends Scene {
         this.scene.restart();
       });
     }
+  }
+
+  public setNumDiscs(numDiscs: number) {
+    this.numDiscs = Math.max(1, Math.min(10, numDiscs)); // Limit between 1 and 10 discs
+    this.restartGame();
+  }
+
+  private restartGame() {
+    // Clear existing objects
+    this.towerBases.forEach((base) => base.destroy());
+    this.towerPoles.forEach((pole) => pole.destroy());
+    this.towers.forEach((tower) => {
+      tower.forEach((disc) => disc.graphics.destroy());
+    });
+
+    // Reset game state
+    this.towerBases = [];
+    this.towerPoles = [];
+    this.towers = [[], [], []];
+    this.selectedDisc = null;
+    this.selectedTower = -1;
+    this.moveCount = 0;
+
+    // Recreate game elements
+    this.createTowers();
+    this.createDiscs(this.numDiscs);
+    this.moveText.setText("Moves: 0");
+    this.winText.setText("");
+    this.winText.removeInteractive();
   }
 }
