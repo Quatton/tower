@@ -82,13 +82,13 @@ export class Game extends Scene {
       if (isLandscape) {
         // Mobile landscape: prioritize using full width, allow tighter spacing
         this.scaleFactor = Math.min(
-          width / 750,  // More lenient width requirement
+          width / 750, // More lenient width requirement
           height / 400, // Minimum height for towers
         );
       } else {
         // Mobile portrait: use more of the available space
         this.scaleFactor = Math.min(
-          width / 450,  // Allow towers to be closer together
+          width / 450, // Allow towers to be closer together
           height / 600, // Use more vertical space
         );
       }
@@ -98,14 +98,11 @@ export class Game extends Scene {
       // Desktop/tablet scaling (original logic but more generous)
       if (isLandscape) {
         this.scaleFactor = Math.min(
-          width / 900,  // Less conservative than before
+          width / 900, // Less conservative than before
           height / 500,
         );
       } else {
-        this.scaleFactor = Math.min(
-          width / 550,
-          height / 700,
-        );
+        this.scaleFactor = Math.min(width / 550, height / 700);
       }
       // Standard minimum scale for larger devices
       this.scaleFactor = Math.max(0.4, Math.min(this.scaleFactor, 2.0));
@@ -166,16 +163,17 @@ export class Game extends Scene {
     const isLandscape = width > height;
 
     if (isMobile) {
-      // On mobile, use more of the available width
+      // On mobile, distribute towers more evenly across screen width
+      // Use a larger portion of screen width with padding on sides
       if (isLandscape) {
-        // Mobile landscape: tighter spacing, use more screen width
-        return Math.min(200 * this.scaleFactor, width / 3.2);
+        // Mobile landscape: use ~70% of screen width for the 3 towers
+        return Math.max(180 * this.scaleFactor, width * 0.35);
       } else {
-        // Mobile portrait: even tighter spacing
-        return Math.min(160 * this.scaleFactor, width / 3.5);
+        // Mobile portrait: use ~60% of screen width for better separation
+        return Math.max(150 * this.scaleFactor, width * 0.3);
       }
     } else {
-      // Desktop/tablet spacing
+      // Desktop/tablet spacing - more conservative
       if (isLandscape) {
         return Math.min(250 * this.scaleFactor, width / 4);
       } else {
@@ -283,9 +281,13 @@ export class Game extends Scene {
     let clickedTower = -1;
     for (let i = 0; i < 3; i++) {
       const towerX = centerX + (i - 1) * dimensions.towerSpacing;
+      // Make click zone more generous, especially on mobile
+      const width = this.cameras.main.width;
+      const isMobile = width < 768;
+      const baseClickZone = isMobile ? 120 : 100;
       const clickZone = Math.max(
-        100 * this.scaleFactor,
-        dimensions.towerSpacing / 2,
+        baseClickZone * this.scaleFactor,
+        dimensions.towerSpacing / 2.2, // Slightly smaller than half spacing to avoid overlap
       );
       if (Math.abs(pointer.x - towerX) < clickZone) {
         clickedTower = i;
