@@ -234,10 +234,21 @@ export class Game extends Scene {
 
       const disc = this.add.graphics();
       const color = this.DISC_COLORS[i % this.DISC_COLORS.length];
+      const strokeWidth = Math.max(1, 2 * this.scaleFactor);
+
+      // Add stroke for better contrast
+      disc.lineStyle(strokeWidth, 0x000000);
       if (color) {
         disc.fillStyle(color);
       }
       disc.fillRoundedRect(
+        -discWidth / 2,
+        -dimensions.discHeight / 2,
+        discWidth,
+        dimensions.discHeight,
+        5 * this.scaleFactor,
+      );
+      disc.strokeRoundedRect(
         -discWidth / 2,
         -dimensions.discHeight / 2,
         discWidth,
@@ -456,14 +467,25 @@ export class Game extends Scene {
                 const discSize = this.selectedDisc.size;
                 const discWidth = (30 + discSize * 25) * this.scaleFactor;
                 const dimensions = this.getResponsiveDimensions();
+                const strokeWidth = Math.max(1, 2 * this.scaleFactor);
                 const color =
                   this.DISC_COLORS[
                     (this.numDiscs - discSize) % this.DISC_COLORS.length
                   ];
+
+                // Add stroke for better contrast
+                this.selectedDisc.graphics.lineStyle(strokeWidth, 0x000000);
                 if (color) {
                   this.selectedDisc.graphics.fillStyle(color);
                 }
                 this.selectedDisc.graphics.fillRoundedRect(
+                  -discWidth / 2,
+                  -dimensions.discHeight / 2,
+                  discWidth,
+                  dimensions.discHeight,
+                  5 * this.scaleFactor,
+                );
+                this.selectedDisc.graphics.strokeRoundedRect(
                   -discWidth / 2,
                   -dimensions.discHeight / 2,
                   discWidth,
