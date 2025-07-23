@@ -55,8 +55,8 @@ export default function Home() {
 
   return (
     <main className="h-dvh w-full overflow-hidden">
-      <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-gray-100 p-4 relative">
-        <div className="z-10 flex flex-wrap items-center justify-center gap-2 rounded-lg p-4 shadow-md backdrop-blur-sm absolute bottom-4 left-1/2 transform -translate-x-1/2">
+      <div className="relative flex h-full w-full flex-col items-center justify-center gap-4 bg-gray-100">
+        <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 transform flex-wrap items-center justify-center gap-2 rounded-lg p-4 shadow-md backdrop-blur-sm">
           {[3, 4, 5, 6, 7, 8].map((num) => (
             <Button
               key={num}
@@ -70,7 +70,7 @@ export default function Home() {
         </div>
 
         {/* Game Container */}
-        <div className="h-full max-h-screen w-full max-w-7xl">
+        <div className="h-full max-h-screen w-full">
           <ClientOnly>
             <PhaserGame numDiscs={numDiscs} />
           </ClientOnly>
