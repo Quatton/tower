@@ -61,7 +61,7 @@ export class Game extends Scene {
     );
 
     this.winText = this.add
-      .text(this.cameras.main.centerX, this.cameras.main.height * 0.15, "", {
+      .text(this.cameras.main.centerX, this.cameras.main.height * 0.25, "", {
         fontSize: `${Math.max(20, 32 * this.scaleFactor)}px`,
         color: "#000000",
       })
@@ -133,7 +133,7 @@ export class Game extends Scene {
 
     this.winText.setPosition(
       this.cameras.main.centerX,
-      this.cameras.main.height * 0.15,
+      this.cameras.main.height * 0.25,
     );
     this.winText.setStyle({
       fontSize: `${Math.max(20, 32 * this.scaleFactor)}px`,
