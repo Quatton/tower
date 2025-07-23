@@ -82,7 +82,6 @@ export class Game extends Scene {
 
     EventBus.emit("current-scene-ready", this);
   }
-
   private calculateScaleFactor() {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
@@ -91,9 +90,12 @@ export class Game extends Scene {
     const requiredHeight = this.calculateRequiredHeight();
     const requiredWidth = this.calculateRequiredWidth();
 
+    // Define maximum game width to prevent it from becoming too large
+    const maxGameWidth = 1200; // Maximum width the game should occupy
+    const maxWidthScale = maxGameWidth / requiredWidth;
+
     // Check if this is likely a mobile device (small screen)
     const isMobile = width < 768 || height < 768;
-    const isLandscape = width > height;
 
     // Calculate scale factors based on both width and height constraints
     let widthScale: number;
@@ -101,29 +103,29 @@ export class Game extends Scene {
 
     if (isMobile) {
       // Mobile device scaling
-      if (isLandscape) {
-        // Mobile landscape: prioritize using full width, allow tighter spacing
-        widthScale = width / requiredWidth;
-        heightScale = height / requiredHeight; // Scale based on actual height needed
-      } else {
-        // Mobile portrait: use more of the available space
-        widthScale = width / requiredWidth;
-        heightScale = height / requiredHeight; // Scale based on actual height needed
-      }
-      // Higher minimum scale for mobile for better usability
+      widthScale = width / requiredWidth;
+      heightScale = height / requiredHeight;
+
+      // Higher minimum scale for mobile for better usability, but respect max width
       this.scaleFactor = Math.max(
         0.4,
-        Math.min(Math.min(widthScale, heightScale), 1.8),
+        Math.min(
+          Math.min(widthScale, heightScale),
+          Math.min(1.8, maxWidthScale),
+        ),
       );
     } else {
       // Desktop/tablet scaling
       widthScale = width / requiredWidth;
-      heightScale = height / requiredHeight; // Scale based on actual height needed
+      heightScale = height / requiredHeight;
 
-      // Standard minimum scale for larger devices
+      // Standard minimum scale for larger devices, but respect max width
       this.scaleFactor = Math.max(
         0.3,
-        Math.min(Math.min(widthScale, heightScale), 2.0),
+        Math.min(
+          Math.min(widthScale, heightScale),
+          Math.min(2.0, maxWidthScale),
+        ),
       );
     }
   }
