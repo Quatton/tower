@@ -187,25 +187,32 @@ export class Game extends Scene {
     // Create subtle guide arrow from first to last tower
     const leftTowerX = centerX - dimensions.towerSpacing;
     const rightTowerX = centerX + dimensions.towerSpacing;
-    const arrowY = baseY - dimensions.poleHeight - Math.max(40, 60 * this.scaleFactor); // Above all towers
-    
+    const arrowY =
+      baseY - dimensions.poleHeight - Math.max(40, 60 * this.scaleFactor); // Above all towers
+
     this.guideArrow = this.add.graphics();
     this.guideArrow.lineStyle(Math.max(2, 3 * this.scaleFactor), 0xcccccc, 0.3); // Light gray, semi-transparent
-    
+
     // Draw arrow line
     this.guideArrow.beginPath();
     this.guideArrow.moveTo(leftTowerX + dimensions.towerWidth / 3, arrowY);
     this.guideArrow.lineTo(rightTowerX - dimensions.towerWidth / 3, arrowY);
     this.guideArrow.strokePath();
-    
+
     // Draw arrow head
     const arrowHeadSize = Math.max(8, 12 * this.scaleFactor);
     const arrowTipX = rightTowerX - dimensions.towerWidth / 3;
     this.guideArrow.fillStyle(0xcccccc, 0.3); // Same color and opacity
     this.guideArrow.beginPath();
     this.guideArrow.moveTo(arrowTipX, arrowY);
-    this.guideArrow.lineTo(arrowTipX - arrowHeadSize, arrowY - arrowHeadSize / 2);
-    this.guideArrow.lineTo(arrowTipX - arrowHeadSize, arrowY + arrowHeadSize / 2);
+    this.guideArrow.lineTo(
+      arrowTipX - arrowHeadSize,
+      arrowY - arrowHeadSize / 2,
+    );
+    this.guideArrow.lineTo(
+      arrowTipX - arrowHeadSize,
+      arrowY + arrowHeadSize / 2,
+    );
     this.guideArrow.closePath();
     this.guideArrow.fillPath();
 
