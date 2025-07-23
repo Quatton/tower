@@ -28,9 +28,18 @@ export class Game extends Scene {
   private readonly BASE_TOWER_HEIGHT = 16;
   private readonly BASE_POLE_HEIGHT = 160;
   private readonly BASE_DISC_HEIGHT = 24; // Increased from 16 to 24
+  // Rainbow colors starting from yellow
   private readonly DISC_COLORS = [
-    0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xff8000,
-    0x8000ff, 0x80ff00, 0xff0080,
+    0xffff00, // Yellow
+    0xff8000, // Orange
+    0xff0000, // Red
+    0xff00ff, // Magenta
+    0x8000ff, // Violet
+    0x0000ff, // Blue
+    0x00ffff, // Cyan
+    0x00ff00, // Green
+    0x80ff00, // Lime
+    0xff0080, // Pink
   ];
 
   constructor(numDiscs: number = 4) {
@@ -291,7 +300,7 @@ export class Game extends Scene {
     const arrowY = positions.guideArrowY; // Use calculated position
 
     this.guideArrow = this.add.graphics();
-    this.guideArrow.lineStyle(Math.max(2, 3 * this.scaleFactor), 0xcccccc, 0.3); // Light gray, semi-transparent
+    this.guideArrow.lineStyle(Math.max(2, 3 * this.scaleFactor), 0x555555, 0.3); // Light gray, semi-transparent
 
     // Draw arrow line
     this.guideArrow.beginPath();
@@ -302,7 +311,7 @@ export class Game extends Scene {
     // Draw arrow head
     const arrowHeadSize = Math.max(8, 12 * this.scaleFactor);
     const arrowTipX = rightTowerX - dimensions.towerWidth / 3;
-    this.guideArrow.fillStyle(0xcccccc, 0.3); // Same color and opacity
+    this.guideArrow.fillStyle(0x555555, 0.3); // Same color and opacity
     this.guideArrow.beginPath();
     this.guideArrow.moveTo(arrowTipX, arrowY);
     this.guideArrow.lineTo(
@@ -400,7 +409,8 @@ export class Game extends Scene {
       const discY = baseY - i * dimensions.discHeight;
 
       const disc = this.add.graphics();
-      const color = this.DISC_COLORS[i % this.DISC_COLORS.length];
+      const color =
+        this.DISC_COLORS[(numDiscs - i - 1) % this.DISC_COLORS.length];
       const strokeWidth = Math.max(2, 4 * this.scaleFactor);
 
       // Add stroke for better contrast
