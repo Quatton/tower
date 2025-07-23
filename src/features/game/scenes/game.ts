@@ -38,6 +38,9 @@ export class Game extends Scene {
   create() {
     this.cameras.main.setBackgroundColor(~0);
 
+    // Initialize/reset game state
+    this.initializeGameState();
+
     // Calculate responsive scale factor
     this.calculateScaleFactor();
 
@@ -116,21 +119,8 @@ export class Game extends Scene {
   private handleResize() {
     this.calculateScaleFactor();
 
-    // Clear existing objects
-    this.towerBases.forEach((base) => base.destroy());
-    this.towerPoles.forEach((pole) => pole.destroy());
-    this.towerIndicators.forEach((indicator) => indicator.destroy());
-    this.towers.forEach((tower) => {
-      tower.forEach((disc) => disc.graphics.destroy());
-    });
-
-    // Reset arrays
-    this.towerBases = [];
-    this.towerPoles = [];
-    this.towerIndicators = [];
-    this.towers = [[], [], []];
-    this.selectedDisc = null;
-    this.selectedTower = -1;
+    // Initialize/reset game state and clear objects
+    this.initializeGameState();
 
     // Recreate everything with new scale
     this.createTowers();
@@ -496,10 +486,12 @@ export class Game extends Scene {
     const rightTower = this.towers[2];
     if (rightTower && rightTower.length === this.numDiscs) {
       this.winText.setText(
-        `You Won!\nMoves: ${this.moveCount}\nClick to restart`,
+        `You Won!\nMoves: ${this.moveCount}\nClick anywhere to restart`,
       );
-      this.winText.setInteractive();
-      this.winText.on("pointerdown", () => {
+
+      // Make the entire screen clickable for restart
+      this.input.off("pointerdown", this.handleClick, this);
+      this.input.on("pointerdown", () => {
         this.scene.restart();
       });
     }
@@ -511,7 +503,21 @@ export class Game extends Scene {
   }
 
   private restartGame() {
-    // Clear existing objects
+    this.initializeGameState();
+
+    // Recreate game elements
+    this.createTowers();
+    this.createDiscs(this.numDiscs);
+    this.moveText.setText("Moves: 0");
+    this.winText.setText("");
+
+    // Restore normal input handling (in case we were in win state)
+    this.input.off("pointerdown");
+    this.input.on("pointerdown", this.handleClick, this);
+  }
+
+  private initializeGameState() {
+    // Clear any existing objects BEFORE resetting the arrays
     this.towerBases.forEach((base) => base.destroy());
     this.towerPoles.forEach((pole) => pole.destroy());
     this.towerIndicators.forEach((indicator) => indicator.destroy());
@@ -520,20 +526,15 @@ export class Game extends Scene {
     });
 
     // Reset game state
-    this.towerBases = [];
-    this.towerPoles = [];
-    this.towerIndicators = [];
     this.towers = [[], [], []];
     this.selectedDisc = null;
     this.selectedTower = -1;
     this.moveCount = 0;
 
-    // Recreate game elements
-    this.createTowers();
-    this.createDiscs(this.numDiscs);
-    this.moveText.setText("Moves: 0");
-    this.winText.setText("");
-    this.winText.removeInteractive();
+    // Reset arrays
+    this.towerBases = [];
+    this.towerPoles = [];
+    this.towerIndicators = [];
   }
 
   private showMoveIndicators() {
