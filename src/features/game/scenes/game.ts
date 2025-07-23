@@ -87,8 +87,9 @@ export class Game extends Scene {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
-    // Calculate the minimum height required for the game
+    // Calculate the minimum height and width required for the game
     const requiredHeight = this.calculateRequiredHeight();
+    const requiredWidth = this.calculateRequiredWidth();
 
     // Check if this is likely a mobile device (small screen)
     const isMobile = width < 768 || height < 768;
@@ -102,11 +103,11 @@ export class Game extends Scene {
       // Mobile device scaling
       if (isLandscape) {
         // Mobile landscape: prioritize using full width, allow tighter spacing
-        widthScale = width / 750; // More lenient width requirement
+        widthScale = width / requiredWidth;
         heightScale = height / requiredHeight; // Scale based on actual height needed
       } else {
         // Mobile portrait: use more of the available space
-        widthScale = width / 450; // Allow towers to be closer together
+        widthScale = width / requiredWidth;
         heightScale = height / requiredHeight; // Scale based on actual height needed
       }
       // Higher minimum scale for mobile for better usability
@@ -116,13 +117,9 @@ export class Game extends Scene {
       );
     } else {
       // Desktop/tablet scaling
-      if (isLandscape) {
-        widthScale = width / 900; // Less conservative than before
-        heightScale = height / requiredHeight; // Scale based on actual height needed
-      } else {
-        widthScale = width / 550;
-        heightScale = height / requiredHeight; // Scale based on actual height needed
-      }
+      widthScale = width / requiredWidth;
+      heightScale = height / requiredHeight; // Scale based on actual height needed
+      
       // Standard minimum scale for larger devices
       this.scaleFactor = Math.max(
         0.3,
@@ -164,6 +161,27 @@ export class Game extends Scene {
     return (
       baseMarginBottom + baseTowerHeight + dynamicPoleHeight + totalUISpace
     );
+  }
+
+  private calculateRequiredWidth(): number {
+    // Calculate the total width needed for the game elements
+    const baseTowerWidth = this.BASE_TOWER_WIDTH;
+    
+    // Calculate the width of the largest disc (largest disc is size numDiscs)
+    const largestDiscWidth = 50 + this.numDiscs * 35;
+    
+    // We need space for 3 towers, with the largest disc width being the constraint
+    // Plus some padding between towers and on the sides
+    const sidePadding = 50; // Padding on each side
+    const minTowerSpacing = Math.max(baseTowerWidth, largestDiscWidth) + 40; // Minimum spacing between tower centers
+    
+    // Total width: side padding + space for 3 towers with 2 gaps between them
+    const totalWidth = sidePadding * 2 + minTowerSpacing * 2; // 2 gaps between 3 towers
+    
+    // Add the width of towers themselves (center tower position doesn't add width, left and right do)
+    const towerWidth = Math.max(baseTowerWidth, largestDiscWidth);
+    
+    return totalWidth + towerWidth;
   }
 
   private handleResize() {
@@ -218,25 +236,28 @@ export class Game extends Scene {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
     const isMobile = width < 768 || height < 768;
-    const isLandscape = width > height;
-
+    
+    // Calculate minimum spacing based on disc and tower sizes
+    const baseTowerWidth = this.BASE_TOWER_WIDTH * this.scaleFactor;
+    const largestDiscWidth = (50 + this.numDiscs * 35) * this.scaleFactor;
+    const minSpacingForDiscs = Math.max(baseTowerWidth, largestDiscWidth) + (40 * this.scaleFactor);
+    
+    // Calculate available space for towers
+    const sidePadding = Math.max(50, 80 * this.scaleFactor);
+    const availableWidth = width - (sidePadding * 2);
+    
+    // Calculate spacing that fits in available width
+    // We have 3 towers, so 2 gaps between them
+    const maxSpacing = availableWidth / 2; // 2 gaps between 3 towers
+    
     if (isMobile) {
-      // On mobile, distribute towers more evenly across screen width
-      // Use a larger portion of screen width with padding on sides
-      if (isLandscape) {
-        // Mobile landscape: use ~70% of screen width for the 3 towers
-        return Math.max(180 * this.scaleFactor, width * 0.35);
-      } else {
-        // Mobile portrait: use ~60% of screen width for better separation
-        return Math.max(150 * this.scaleFactor, width * 0.3);
-      }
+      // On mobile, use tighter spacing but ensure discs don't overlap
+      const mobileSpacing = Math.max(minSpacingForDiscs * 0.9, maxSpacing * 0.8);
+      return Math.min(mobileSpacing, maxSpacing);
     } else {
-      // Desktop/tablet spacing - more conservative
-      if (isLandscape) {
-        return Math.min(250 * this.scaleFactor, width / 4);
-      } else {
-        return Math.min(200 * this.scaleFactor, width / 4);
-      }
+      // Desktop/tablet: prefer wider spacing but respect width constraints
+      const desktopSpacing = Math.max(minSpacingForDiscs, width / 5);
+      return Math.min(desktopSpacing, maxSpacing);
     }
   }
 
