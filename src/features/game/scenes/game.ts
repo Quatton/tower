@@ -87,40 +87,83 @@ export class Game extends Scene {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
+    // Calculate the minimum height required for the game
+    const requiredHeight = this.calculateRequiredHeight();
+
     // Check if this is likely a mobile device (small screen)
     const isMobile = width < 768 || height < 768;
     const isLandscape = width > height;
 
+    // Calculate scale factors based on both width and height constraints
+    let widthScale: number;
+    let heightScale: number;
+
     if (isMobile) {
-      // Be more generous with scaling on mobile devices
+      // Mobile device scaling
       if (isLandscape) {
         // Mobile landscape: prioritize using full width, allow tighter spacing
-        this.scaleFactor = Math.min(
-          width / 750, // More lenient width requirement
-          height / 400, // Minimum height for towers
-        );
+        widthScale = width / 750; // More lenient width requirement
+        heightScale = height / requiredHeight; // Scale based on actual height needed
       } else {
         // Mobile portrait: use more of the available space
-        this.scaleFactor = Math.min(
-          width / 450, // Allow towers to be closer together
-          height / 600, // Use more vertical space
-        );
+        widthScale = width / 450; // Allow towers to be closer together
+        heightScale = height / requiredHeight; // Scale based on actual height needed
       }
       // Higher minimum scale for mobile for better usability
-      this.scaleFactor = Math.max(0.6, Math.min(this.scaleFactor, 1.8));
+      this.scaleFactor = Math.max(
+        0.4,
+        Math.min(Math.min(widthScale, heightScale), 1.8),
+      );
     } else {
-      // Desktop/tablet scaling (original logic but more generous)
+      // Desktop/tablet scaling
       if (isLandscape) {
-        this.scaleFactor = Math.min(
-          width / 900, // Less conservative than before
-          height / 500,
-        );
+        widthScale = width / 900; // Less conservative than before
+        heightScale = height / requiredHeight; // Scale based on actual height needed
       } else {
-        this.scaleFactor = Math.min(width / 550, height / 700);
+        widthScale = width / 550;
+        heightScale = height / requiredHeight; // Scale based on actual height needed
       }
       // Standard minimum scale for larger devices
-      this.scaleFactor = Math.max(0.4, Math.min(this.scaleFactor, 2.0));
+      this.scaleFactor = Math.max(
+        0.3,
+        Math.min(Math.min(widthScale, heightScale), 2.0),
+      );
     }
+  }
+
+  private calculateRequiredHeight(): number {
+    // Calculate the total height needed for the game elements
+    const baseDiscHeight = this.BASE_DISC_HEIGHT;
+    const basePoleHeight = this.BASE_POLE_HEIGHT;
+    const baseTowerHeight = this.BASE_TOWER_HEIGHT;
+    const baseMarginBottom = 100; // Base margin at bottom
+
+    // Height for disc stack (with some extra space above)
+    const discStackHeight = this.numDiscs * baseDiscHeight;
+    const extraSpaceAboveDiscs = 60; // Extra space above the highest disc
+    const dynamicPoleHeight = Math.max(
+      basePoleHeight,
+      discStackHeight + extraSpaceAboveDiscs,
+    );
+
+    // Space needed above towers for UI elements
+    const spaceForIndicators = 35; // Space for move indicators
+    const spaceForGuideArrow = 35; // Space for guide arrow
+    const spaceForSelectedDisc = 50; // Space for selected disc
+    const spaceForStartHint = 40; // Space for start hint arrow
+    const topPadding = 20; // General top padding
+
+    const totalUISpace =
+      spaceForIndicators +
+      spaceForGuideArrow +
+      spaceForSelectedDisc +
+      spaceForStartHint +
+      topPadding;
+
+    // Total required height (unscaled)
+    return (
+      baseMarginBottom + baseTowerHeight + dynamicPoleHeight + totalUISpace
+    );
   }
 
   private handleResize() {
@@ -157,13 +200,13 @@ export class Game extends Scene {
     const extraSpace = Math.max(40, 60 * this.scaleFactor); // Extra space above the highest disc
     const dynamicPoleHeight = discStackHeight + extraSpace;
 
+    // Ensure minimum pole height for visual consistency
+    const minPoleHeight = this.BASE_POLE_HEIGHT * this.scaleFactor;
+
     return {
       towerWidth: this.BASE_TOWER_WIDTH * this.scaleFactor,
       towerHeight: this.BASE_TOWER_HEIGHT * this.scaleFactor,
-      poleHeight: Math.max(
-        this.BASE_POLE_HEIGHT * this.scaleFactor,
-        dynamicPoleHeight,
-      ),
+      poleHeight: Math.max(minPoleHeight, dynamicPoleHeight),
       discHeight: this.BASE_DISC_HEIGHT * this.scaleFactor,
       poleWidth: Math.max(6, 10 * this.scaleFactor),
       marginBottom: Math.max(50, 100 * this.scaleFactor),
@@ -783,19 +826,22 @@ export class Game extends Scene {
     const dimensions = this.getResponsiveDimensions();
     const baseY = this.cameras.main.height - dimensions.marginBottom;
 
-    // Define minimum spacing between elements
-    const minSpacing = Math.max(20, 30 * this.scaleFactor);
+    // Define minimum spacing between elements (scaled appropriately)
+    const minSpacing = Math.max(15, 25 * this.scaleFactor);
 
     // Calculate positions from bottom to top
     const towerTop = baseY - dimensions.poleHeight;
-    const indicatorY = towerTop - Math.max(25, 35 * this.scaleFactor); // Small gap from pole top
+    const indicatorY = towerTop - Math.max(20, 30 * this.scaleFactor); // Small gap from pole top
     const guideArrowY =
-      indicatorY - minSpacing - Math.max(15, 20 * this.scaleFactor);
+      indicatorY - minSpacing - Math.max(10, 15 * this.scaleFactor);
+
+    // Ensure selected disc position has enough space but doesn't go too high
+    const availableTopSpace = guideArrowY - minSpacing;
     const selectedDiscY = Math.max(
-      50,
+      30 * this.scaleFactor, // Minimum distance from top
       Math.min(
-        guideArrowY - minSpacing - Math.max(30, 40 * this.scaleFactor),
-        80 * this.scaleFactor,
+        availableTopSpace - Math.max(20, 30 * this.scaleFactor),
+        60 * this.scaleFactor, // Maximum preferred distance from top
       ),
     );
 
