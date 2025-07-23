@@ -1,7 +1,7 @@
 import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { lazy, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Disc2, RotateCcw } from "lucide-react";
+import { RotateCcw, Maximize } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -15,6 +15,34 @@ export default function Home() {
   const [numDiscs, setNumDiscs] = useState(4);
   const [isAspectRatioTooVertical, setIsAspectRatioTooVertical] =
     useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [hasRequestedFullscreen, setHasRequestedFullscreen] = useState(false);
+
+  const requestFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (error) {
+      console.log("Fullscreen request failed:", error);
+    }
+  };
+
+  const handleFirstInteraction = async () => {
+    if (!hasRequestedFullscreen && !document.fullscreenElement) {
+      setHasRequestedFullscreen(true);
+      try {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+      } catch (error) {
+        console.log("Auto fullscreen request failed:", error);
+      }
+    }
+  };
 
   useEffect(() => {
     const checkAspectRatio = () => {
@@ -23,13 +51,19 @@ export default function Home() {
       setIsAspectRatioTooVertical(aspectRatio < 0.67);
     };
 
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
     checkAspectRatio();
     window.addEventListener("resize", checkAspectRatio);
     window.addEventListener("orientationchange", checkAspectRatio);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
 
     return () => {
       window.removeEventListener("resize", checkAspectRatio);
       window.removeEventListener("orientationchange", checkAspectRatio);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
 
@@ -56,6 +90,18 @@ export default function Home() {
   return (
     <main className="h-dvh w-full overflow-hidden">
       <div className="relative flex h-full w-full flex-col items-center justify-center gap-4 bg-gray-100">
+        {/* Fullscreen Button */}
+        <div className="absolute top-4 right-4 z-10">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={requestFullscreen}
+            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          >
+            <Maximize className="h-4 w-4" />
+          </Button>
+        </div>
+
         <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 transform flex-wrap items-center justify-center gap-2 rounded-lg p-2 shadow-md backdrop-blur-sm">
           {[3, 4, 5, 6, 7, 8].map((num) => (
             <Button
@@ -70,7 +116,11 @@ export default function Home() {
         </div>
 
         {/* Game Container */}
-        <div className="h-full max-h-screen w-full">
+        <div
+          className="h-full max-h-screen w-full"
+          onClick={handleFirstInteraction}
+          onTouchStart={handleFirstInteraction}
+        >
           <ClientOnly>
             <PhaserGame numDiscs={numDiscs} />
           </ClientOnly>
