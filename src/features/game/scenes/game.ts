@@ -182,13 +182,12 @@ export class Game extends Scene {
   private createTowers() {
     const centerX = this.cameras.main.width / 2;
     const dimensions = this.getResponsiveDimensions();
-    const baseY = this.cameras.main.height - dimensions.marginBottom;
+    const positions = this.getVerticalPositions();
 
     // Create subtle guide arrow from first to last tower
     const leftTowerX = centerX - dimensions.towerSpacing;
     const rightTowerX = centerX + dimensions.towerSpacing;
-    const arrowY =
-      baseY - dimensions.poleHeight - Math.max(40, 60 * this.scaleFactor); // Above all towers
+    const arrowY = positions.guideArrowY; // Use calculated position
 
     this.guideArrow = this.add.graphics();
     this.guideArrow.lineStyle(Math.max(2, 3 * this.scaleFactor), 0xcccccc, 0.3); // Light gray, semi-transparent
@@ -226,7 +225,7 @@ export class Game extends Scene {
       base.fillStyle(baseColor);
       base.fillRect(
         towerX - dimensions.towerWidth / 2,
-        baseY,
+        positions.baseY,
         dimensions.towerWidth,
         dimensions.towerHeight,
       );
@@ -239,7 +238,7 @@ export class Game extends Scene {
       pole.fillStyle(poleColor);
       pole.fillRect(
         towerX - dimensions.poleWidth / 2,
-        baseY - dimensions.poleHeight,
+        positions.baseY - dimensions.poleHeight,
         dimensions.poleWidth,
         dimensions.poleHeight,
       );
@@ -360,12 +359,12 @@ export class Game extends Scene {
     this.selectedDisc = topDisc;
     this.selectedTower = towerIndex;
 
-    // Animate disc to top-center of screen
-    const targetY = Math.max(50, 80 * this.scaleFactor); // Top of screen with some padding
+    // Animate disc to calculated position to avoid overlaps
+    const positions = this.getVerticalPositions();
     this.tweens.add({
       targets: topDisc.graphics,
       x: this.cameras.main.centerX,
-      y: targetY,
+      y: positions.selectedDiscY,
       duration: 200,
       ease: "Power2",
     });
@@ -583,16 +582,13 @@ export class Game extends Scene {
 
     const centerX = this.cameras.main.width / 2;
     const dimensions = this.getResponsiveDimensions();
+    const positions = this.getVerticalPositions();
     const indicatorSize = Math.max(20, 30 * this.scaleFactor);
     const strokeWidth = Math.max(2, 3 * this.scaleFactor);
 
     for (let i = 0; i < 3; i++) {
       const towerX = centerX + (i - 1) * dimensions.towerSpacing;
-      const indicatorY =
-        this.cameras.main.height -
-        dimensions.marginBottom -
-        dimensions.poleHeight -
-        indicatorSize * 2;
+      const indicatorY = positions.indicatorY;
 
       const indicator = this.towerIndicators[i];
       if (!indicator) continue;
@@ -645,5 +641,34 @@ export class Game extends Scene {
       indicator.setVisible(false);
       indicator.clear();
     });
+  }
+  private getVerticalPositions() {
+    const dimensions = this.getResponsiveDimensions();
+    const baseY = this.cameras.main.height - dimensions.marginBottom;
+
+    // Define minimum spacing between elements
+    const minSpacing = Math.max(20, 30 * this.scaleFactor);
+
+    // Calculate positions from bottom to top
+    const towerTop = baseY - dimensions.poleHeight;
+    const indicatorY = towerTop - Math.max(25, 35 * this.scaleFactor); // Small gap from pole top
+    const guideArrowY =
+      indicatorY - minSpacing - Math.max(15, 20 * this.scaleFactor);
+    const selectedDiscY = Math.max(
+      50,
+      Math.min(
+        guideArrowY - minSpacing - Math.max(30, 40 * this.scaleFactor),
+        80 * this.scaleFactor,
+      ),
+    );
+
+    return {
+      baseY,
+      towerTop,
+      indicatorY,
+      guideArrowY,
+      selectedDiscY,
+      minSpacing,
+    };
   }
 }
