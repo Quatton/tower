@@ -333,35 +333,6 @@ export class Game extends Scene {
     this.selectedDisc = topDisc;
     this.selectedTower = towerIndex;
 
-    // Visual feedback - use red stroke with same width as black stroke
-    const dimensions = this.getResponsiveDimensions();
-    const strokeWidth = Math.max(2, 4 * this.scaleFactor); // Same as disc stroke
-    const discSize = topDisc.size;
-    const discWidth = (50 + discSize * 35) * this.scaleFactor; // Updated to match createDiscs
-
-    // Clear and redraw the disc with red selection stroke
-    topDisc.graphics.clear();
-    topDisc.graphics.lineStyle(strokeWidth, 0xff0000); // Red stroke for selection
-    const color =
-      this.DISC_COLORS[(this.numDiscs - discSize) % this.DISC_COLORS.length];
-    if (color) {
-      topDisc.graphics.fillStyle(color);
-    }
-    topDisc.graphics.fillRoundedRect(
-      -discWidth / 2,
-      -dimensions.discHeight / 2,
-      discWidth,
-      dimensions.discHeight,
-      5 * this.scaleFactor,
-    );
-    topDisc.graphics.strokeRoundedRect(
-      -discWidth / 2,
-      -dimensions.discHeight / 2,
-      discWidth,
-      dimensions.discHeight,
-      5 * this.scaleFactor,
-    );
-
     // Animate disc to top-center of screen
     const targetY = Math.max(50, 80 * this.scaleFactor); // Top of screen with some padding
     this.tweens.add({
@@ -511,40 +482,6 @@ export class Game extends Scene {
             y: correctY,
             duration: 200,
             ease: "Power2",
-            onComplete: () => {
-              if (this.selectedDisc) {
-                // Clear and redraw the disc without selection highlight
-                this.selectedDisc.graphics.clear();
-                const discSize = this.selectedDisc.size;
-                const discWidth = (50 + discSize * 35) * this.scaleFactor; // Updated to match createDiscs
-                const dimensions = this.getResponsiveDimensions();
-                const strokeWidth = Math.max(2, 4 * this.scaleFactor);
-                const color =
-                  this.DISC_COLORS[
-                    (this.numDiscs - discSize) % this.DISC_COLORS.length
-                  ];
-
-                // Add stroke for better contrast
-                this.selectedDisc.graphics.lineStyle(strokeWidth, 0x000000);
-                if (color) {
-                  this.selectedDisc.graphics.fillStyle(color);
-                }
-                this.selectedDisc.graphics.fillRoundedRect(
-                  -discWidth / 2,
-                  -dimensions.discHeight / 2,
-                  discWidth,
-                  dimensions.discHeight,
-                  5 * this.scaleFactor,
-                );
-                this.selectedDisc.graphics.strokeRoundedRect(
-                  -discWidth / 2,
-                  -dimensions.discHeight / 2,
-                  discWidth,
-                  dimensions.discHeight,
-                  5 * this.scaleFactor,
-                );
-              }
-            },
           });
         }
       }

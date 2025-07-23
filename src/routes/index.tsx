@@ -13,7 +13,8 @@ const PhaserGame = lazy(() =>
 
 export default function Home() {
   const [numDiscs, setNumDiscs] = useState(4);
-  const [isAspectRatioTooVertical, setIsAspectRatioTooVertical] = useState(false);
+  const [isAspectRatioTooVertical, setIsAspectRatioTooVertical] =
+    useState(false);
 
   useEffect(() => {
     const checkAspectRatio = () => {
@@ -42,8 +43,9 @@ export default function Home() {
               Please Rotate Your Device
             </h2>
             <p className="text-gray-600">
-              This game works best in landscape orientation or with a wider screen. 
-              Please rotate your device or resize your browser window for the optimal experience.
+              This game works best in landscape orientation or with a wider
+              screen. Please rotate your device or resize your browser window
+              for the optimal experience.
             </p>
           </div>
         </div>
