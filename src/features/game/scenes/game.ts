@@ -387,19 +387,31 @@ export class Game extends Scene {
     }
   }
 
-  private getDarkerColor(color: number): number {
+  private getContrastColor(color: number): number {
     // Extract RGB components
     const r = (color >> 16) & 0xff;
     const g = (color >> 8) & 0xff;
     const b = color & 0xff;
 
-    // Make each component darker (multiply by 0.6 for good contrast)
-    const darkerR = Math.floor(r * 0.3);
-    const darkerG = Math.floor(g * 0.3);
-    const darkerB = Math.floor(b * 0.3);
+    // Calculate perceived brightness using the luminance formula
+    const brightness = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+
+    let contrastR: number, contrastG: number, contrastB: number;
+
+    if (brightness > 0.5) {
+      // Light color - make it darker
+      contrastR = Math.floor(r * 0.3);
+      contrastG = Math.floor(g * 0.3);
+      contrastB = Math.floor(b * 0.3);
+    } else {
+      // Dark color - make it lighter
+      contrastR = Math.min(255, Math.floor(r + (255 - r) * 0.7));
+      contrastG = Math.min(255, Math.floor(g + (255 - g) * 0.7));
+      contrastB = Math.min(255, Math.floor(b + (255 - b) * 0.7));
+    }
 
     // Combine back into a single color value
-    return (darkerR << 16) | (darkerG << 8) | darkerB;
+    return (contrastR << 16) | (contrastG << 8) | contrastB;
   }
 
   private createDiscs(numDiscs: number) {
@@ -444,13 +456,13 @@ export class Game extends Scene {
       const discNumber = discSize; // Number corresponds to disc size
       const fontSize = Math.max(12, 16 * this.scaleFactor);
 
-      // Create a darker version of the disc color for the text
-      const darkerColor = this.getDarkerColor(color || 0x888888); // fallback color if undefined
+      // Create a contrasting version of the disc color for the text
+      const contrastColor = this.getContrastColor(color || 0x888888); // fallback color if undefined
 
       const numberText = this.add
         .text(0, 0, discNumber.toString(), {
           fontSize: `${fontSize}px`,
-          color: `#${darkerColor.toString(16).padStart(6, "0")}`,
+          color: `#${contrastColor.toString(16).padStart(6, "0")}`,
           fontStyle: "bold",
         })
         .setOrigin(0.5);
