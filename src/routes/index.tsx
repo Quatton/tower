@@ -100,7 +100,7 @@ export default function Home() {
           </Button>
         </div>
 
-        <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 transform flex-wrap items-center justify-center gap-2 rounded-lg p-2 shadow-md backdrop-blur-sm">
+        <div className="absolute top-2 left-1/2 z-10 flex -translate-x-1/2 transform flex-wrap items-center justify-center gap-2 rounded-lg p-2 shadow-md backdrop-blur-sm">
           {[3, 4, 5, 6, 7, 8].map((num) => (
             <Button
               key={num}
