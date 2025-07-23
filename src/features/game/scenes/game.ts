@@ -273,17 +273,6 @@ export class Game extends Scene {
       };
 
       this.towers[0]?.push(discObj);
-
-      // Add hover effects
-      disc.on("pointerover", () => {
-        if (this.canSelectDisc(discObj)) {
-          disc.setAlpha(0.8);
-        }
-      });
-
-      disc.on("pointerout", () => {
-        disc.setAlpha(1);
-      });
     }
   }
 
