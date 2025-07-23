@@ -2,7 +2,9 @@ import { Scene } from "phaser";
 import { EventBus } from "../event";
 
 interface Disc {
+  container: Phaser.GameObjects.Container;
   graphics: Phaser.GameObjects.Graphics;
+  text: Phaser.GameObjects.Text;
   size: number;
   originalY: number;
 }
@@ -258,6 +260,21 @@ export class Game extends Scene {
     }
   }
 
+  private getDarkerColor(color: number): number {
+    // Extract RGB components
+    const r = (color >> 16) & 0xff;
+    const g = (color >> 8) & 0xff;
+    const b = color & 0xff;
+
+    // Make each component darker (multiply by 0.6 for good contrast)
+    const darkerR = Math.floor(r * 0.3);
+    const darkerG = Math.floor(g * 0.3);
+    const darkerB = Math.floor(b * 0.3);
+
+    // Combine back into a single color value
+    return (darkerR << 16) | (darkerG << 8) | darkerB;
+  }
+
   private createDiscs(numDiscs: number) {
     const centerX = this.cameras.main.width / 2;
     const dimensions = this.getResponsiveDimensions();
@@ -296,8 +313,28 @@ export class Game extends Scene {
         dimensions.discHeight,
         5 * this.scaleFactor,
       );
-      disc.setPosition(leftTowerX, discY);
-      disc.setInteractive(
+      // Add number to the disc
+      const discNumber = discSize; // Number corresponds to disc size
+      const fontSize = Math.max(12, 16 * this.scaleFactor);
+
+      // Create a darker version of the disc color for the text
+      const darkerColor = this.getDarkerColor(color || 0x888888); // fallback color if undefined
+
+      const numberText = this.add
+        .text(0, 0, discNumber.toString(), {
+          fontSize: `${fontSize}px`,
+          color: `#${darkerColor.toString(16).padStart(6, "0")}`,
+          fontStyle: "bold",
+        })
+        .setOrigin(0.5);
+
+      // Create container to hold both graphics and text
+      const discContainer = this.add.container(leftTowerX, discY, [
+        disc,
+        numberText,
+      ]);
+      discContainer.setSize(discWidth, dimensions.discHeight);
+      discContainer.setInteractive(
         new Phaser.Geom.Rectangle(
           -discWidth / 2,
           -dimensions.discHeight / 2,
@@ -307,21 +344,10 @@ export class Game extends Scene {
         Phaser.Geom.Rectangle.Contains,
       );
 
-      // Add number to the disc
-      const discNumber = discSize; // Number corresponds to disc size
-      const fontSize = Math.max(12, 16 * this.scaleFactor);
-      
-      // Create a darker version of the disc color for the text
-      const darkerColor = this.getDarkerColor(color);
-      
-      const numberText = this.add.text(leftTowerX, discY, discNumber.toString(), {
-        fontSize: `${fontSize}px`,
-        color: `#${darkerColor.toString(16).padStart(6, '0')}`,
-        fontStyle: 'bold',
-      }).setOrigin(0.5);
-
       const discObj: Disc = {
+        container: discContainer,
         graphics: disc,
+        text: numberText,
         size: discSize,
         originalY: discY,
       };
@@ -385,7 +411,7 @@ export class Game extends Scene {
     // Animate disc to calculated position to avoid overlaps
     const positions = this.getVerticalPositions();
     this.tweens.add({
-      targets: topDisc.graphics,
+      targets: topDisc.container,
       x: this.cameras.main.centerX,
       y: positions.selectedDiscY,
       duration: 200,
@@ -429,7 +455,7 @@ export class Game extends Scene {
 
     // Animate the move
     this.tweens.add({
-      targets: disc.graphics,
+      targets: disc.container,
       x: targetX,
       y: targetY,
       duration: 300,
@@ -531,7 +557,7 @@ export class Game extends Scene {
 
           // Animate back to correct position
           this.tweens.add({
-            targets: this.selectedDisc.graphics,
+            targets: this.selectedDisc.container,
             x: correctX,
             y: correctY,
             duration: 200,
@@ -658,7 +684,9 @@ export class Game extends Scene {
       this.startHintArrow = null;
     }
     this.towers.forEach((tower) => {
-      tower.forEach((disc) => disc.graphics.destroy());
+      tower.forEach((disc) => {
+        disc.container.destroy();
+      });
     });
 
     // Reset game state
