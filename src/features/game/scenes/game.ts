@@ -418,8 +418,7 @@ export class Game extends Scene {
       const discY = baseY - i * dimensions.discHeight;
 
       const disc = this.add.graphics();
-      const color =
-        this.DISC_COLORS[(numDiscs - i - 1) % this.DISC_COLORS.length];
+      const color = this.DISC_COLORS[(discSize - 1) % this.DISC_COLORS.length];
       const strokeWidth = Math.max(2, 4 * this.scaleFactor);
 
       // Add stroke for better contrast
@@ -599,9 +598,7 @@ export class Game extends Scene {
         const dimensions = this.getResponsiveDimensions();
         const strokeWidth = Math.max(2, 4 * this.scaleFactor);
         const color =
-          this.DISC_COLORS[
-            (this.numDiscs - discSize - 1) % this.DISC_COLORS.length
-          ];
+          this.DISC_COLORS[(discSize - 1) % this.DISC_COLORS.length];
 
         // Add normal black stroke
         disc.graphics.lineStyle(strokeWidth, 0x000000);
