@@ -5,6 +5,56 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Fullscreen and PWA optimizations */
+html,
+body {
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-text-size-adjust: none;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+
+/* Hide address bar on mobile browsers */
+@media screen and (max-width: 768px) {
+  html {
+    height: 100vh;
+    height: calc(100vh + env(safe-area-inset-bottom));
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: calc(100vh + env(safe-area-inset-bottom));
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+      env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+}
+
+/* PWA display modes */
+@media all and (display-mode: fullscreen) {
+  body {
+    padding: 0;
+  }
+}
+
+@media all and (display-mode: standalone) {
+  body {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+      env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

@@ -21,7 +21,7 @@ export const Route = createRootRoute({
       {
         name: "viewport",
         content:
-          "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+          "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
       },
       {
         title: "Tower of Hanoi - Interactive Puzzle Game",
@@ -32,6 +32,10 @@ export const Route = createRootRoute({
           "Play the classic Tower of Hanoi puzzle game. Move all discs from the left tower to the right tower following the rules. Responsive design works on all devices.",
       },
       {
+        name: "theme-color",
+        content: "#ffffff",
+      },
+      {
         name: "apple-mobile-web-app-capable",
         content: "yes",
       },
@@ -40,8 +44,24 @@ export const Route = createRootRoute({
         content: "black-translucent",
       },
       {
+        name: "apple-mobile-web-app-title",
+        content: "Tower of Hanoi",
+      },
+      {
         name: "mobile-web-app-capable",
         content: "yes",
+      },
+      {
+        name: "msapplication-TileColor",
+        content: "#ffffff",
+      },
+      {
+        name: "msapplication-tap-highlight",
+        content: "no",
+      },
+      {
+        name: "format-detection",
+        content: "telephone=no",
       },
     ],
     links: [
