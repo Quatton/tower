@@ -188,7 +188,9 @@ export class Game extends Scene {
 
       // Create tower base
       const base = this.add.graphics();
-      base.fillStyle(0x8b4513);
+      // Use different colors for the last tower (goal tower)
+      const baseColor = i === 2 ? 0x32cd32 : 0x8b4513; // Bright lime green for goal, brown for others
+      base.fillStyle(baseColor);
       base.fillRect(
         towerX - dimensions.towerWidth / 2,
         baseY,
@@ -199,7 +201,9 @@ export class Game extends Scene {
 
       // Create tower pole
       const pole = this.add.graphics();
-      pole.fillStyle(0x654321);
+      // Use different colors for the last tower (goal tower)
+      const poleColor = i === 2 ? 0x228b22 : 0x654321; // Forest green for goal pole, darker brown for others
+      pole.fillStyle(poleColor);
       pole.fillRect(
         towerX - dimensions.poleWidth / 2,
         baseY - dimensions.poleHeight,
