@@ -20,6 +20,7 @@ export class Game extends Scene {
   private winText!: Phaser.GameObjects.Text;
   private scaleFactor: number = 1;
   private numDiscs: number = 4; // Dynamic number of discs
+  private startHintArrow: Phaser.GameObjects.Graphics | null = null;
   private readonly BASE_TOWER_WIDTH = 160;
   private readonly BASE_TOWER_HEIGHT = 16;
   private readonly BASE_POLE_HEIGHT = 160;
@@ -48,6 +49,9 @@ export class Game extends Scene {
     // Setup towers
     this.createTowers();
     this.createDiscs(this.numDiscs); // Use dynamic number of discs
+
+    // Create start hint arrow
+    this.createStartHintArrow();
 
     // UI
     const fontSize = Math.max(16, 24 * this.scaleFactor);
@@ -126,6 +130,9 @@ export class Game extends Scene {
     // Recreate everything with new scale
     this.createTowers();
     this.createDiscs(this.numDiscs);
+
+    // Recreate start hint arrow
+    this.createStartHintArrow();
 
     // Update UI positions
     const fontSize = Math.max(16, 24 * this.scaleFactor);
@@ -300,6 +307,19 @@ export class Game extends Scene {
         Phaser.Geom.Rectangle.Contains,
       );
 
+      // Add number to the disc
+      const discNumber = discSize; // Number corresponds to disc size
+      const fontSize = Math.max(12, 16 * this.scaleFactor);
+      
+      // Create a darker version of the disc color for the text
+      const darkerColor = this.getDarkerColor(color);
+      
+      const numberText = this.add.text(leftTowerX, discY, discNumber.toString(), {
+        fontSize: `${fontSize}px`,
+        color: `#${darkerColor.toString(16).padStart(6, '0')}`,
+        fontStyle: 'bold',
+      }).setOrigin(0.5);
+
       const discObj: Disc = {
         graphics: disc,
         size: discSize,
@@ -358,6 +378,9 @@ export class Game extends Scene {
 
     this.selectedDisc = topDisc;
     this.selectedTower = towerIndex;
+
+    // Hide start hint arrow after first selection
+    this.hideStartHintArrow();
 
     // Animate disc to calculated position to avoid overlaps
     const positions = this.getVerticalPositions();
@@ -447,6 +470,11 @@ export class Game extends Scene {
 
     this.moveCount++;
     this.moveText.setText(`Moves: ${this.moveCount}`);
+
+    // Hide start hint arrow after first move
+    if (this.moveCount === 1) {
+      this.hideStartHintArrow();
+    }
 
     this.deselectDisc();
     this.checkWinCondition();
@@ -606,6 +634,7 @@ export class Game extends Scene {
     // Recreate game elements
     this.createTowers();
     this.createDiscs(this.numDiscs);
+    this.createStartHintArrow(); // Recreate start hint arrow
     this.moveText.setText("Moves: 0");
     this.winText.setText("");
 
@@ -622,6 +651,11 @@ export class Game extends Scene {
     if (this.guideArrow) {
       this.guideArrow.destroy();
       this.guideArrow = null;
+    }
+    if (this.startHintArrow) {
+      this.tweens.killTweensOf(this.startHintArrow);
+      this.startHintArrow.destroy();
+      this.startHintArrow = null;
     }
     this.towers.forEach((tower) => {
       tower.forEach((disc) => disc.graphics.destroy());
@@ -646,7 +680,7 @@ export class Game extends Scene {
     const dimensions = this.getResponsiveDimensions();
     const positions = this.getVerticalPositions();
     const indicatorSize = Math.max(20, 30 * this.scaleFactor);
-    const strokeWidth = Math.max(2, 3 * this.scaleFactor);
+    const strokeWidth = Math.max(2, 3 * this.scaleFactor); // Reduced stroke thickness
 
     for (let i = 0; i < 3; i++) {
       const towerX = centerX + (i - 1) * dimensions.towerSpacing;
@@ -679,21 +713,25 @@ export class Game extends Scene {
         indicator.fillPath();
         indicator.strokePath();
       } else {
-        // Draw red X
-        indicator.lineStyle(strokeWidth, 0xff0000); // Red color
+        // Draw red filled circle with white X
+        indicator.fillStyle(0xff0000); // Red fill for circle
 
-        // Draw X lines
-        const halfSize = indicatorSize / 3;
+        // Draw filled red circle with red stroke
+        indicator.fillCircle(0, 0, indicatorSize / 2);
+        indicator.lineStyle(strokeWidth, 0xff0000); // Red stroke for circle
+        indicator.strokeCircle(0, 0, indicatorSize / 2);
+
+        // Draw white X lines with proper padding inside the circle
+        const padding = Math.max(6, 8 * this.scaleFactor); // More padding from circle edge
+        const halfSize = indicatorSize / 2 - padding;
+        indicator.lineStyle(Math.max(2, 3 * this.scaleFactor), 0xffffff); // White X lines for contrast
+
         indicator.beginPath();
         indicator.moveTo(-halfSize, -halfSize);
         indicator.lineTo(halfSize, halfSize);
         indicator.moveTo(halfSize, -halfSize);
         indicator.lineTo(-halfSize, halfSize);
         indicator.strokePath();
-
-        // Add border circle
-        indicator.lineStyle(strokeWidth, 0x000000); // Black border
-        indicator.strokeCircle(0, 0, indicatorSize / 2);
       }
     }
   }
@@ -732,5 +770,109 @@ export class Game extends Scene {
       selectedDiscY,
       minSpacing,
     };
+  }
+
+  private createStartHintArrow() {
+    // Only show if no moves have been made yet
+    if (this.moveCount > 0) return;
+
+    const centerX = this.cameras.main.width / 2;
+    const dimensions = this.getResponsiveDimensions();
+    const leftTowerX = centerX - dimensions.towerSpacing;
+    const positions = this.getVerticalPositions();
+
+    // Position the arrow at the top left of the first pole with some margin
+    const margin = Math.max(20, 30 * this.scaleFactor);
+    const arrowX = leftTowerX - dimensions.poleWidth / 2 - margin;
+    const arrowY = positions.towerTop - margin;
+
+    this.startHintArrow = this.add.graphics();
+    this.startHintArrow.fillStyle(0xff0000); // Red fill
+
+    // Draw arrow pointing 45 degrees to bottom right (bigger size)
+    const arrowSize = Math.max(10, 12 * this.scaleFactor); // Increased size
+    const arrowHead = Math.max(8, 12 * this.scaleFactor); // Increased head size
+    const shaftThickness = Math.max(8, 12 * this.scaleFactor); // Thicker shaft width
+
+    // Arrow line at 45 degree angle (pointing to bottom right)
+    const lineLength = arrowSize;
+    const endX = lineLength * Math.cos(Math.PI / 4); // 45 degrees in radians
+    const endY = lineLength * Math.sin(Math.PI / 4);
+
+    // Draw thick arrow shaft using a filled rectangle rotated at 45 degrees
+    const angle = Math.PI / 4; // 45 degrees
+
+    // Calculate the four corners of the thick shaft rectangle
+    const halfThickness = shaftThickness / 2;
+
+    // Perpendicular vector to the arrow direction (for thickness)
+    const perpX = -Math.sin(angle) * halfThickness;
+    const perpY = Math.cos(angle) * halfThickness;
+
+    // Four corners of the shaft rectangle
+    const corner1X = 0 + perpX;
+    const corner1Y = 0 + perpY;
+    const corner2X = 0 - perpX;
+    const corner2Y = 0 - perpY;
+    const corner3X = endX - perpX;
+    const corner3Y = endY - perpY;
+    const corner4X = endX + perpX;
+    const corner4Y = endY + perpY;
+
+    // Draw the thick shaft as a filled polygon
+    this.startHintArrow.beginPath();
+    this.startHintArrow.moveTo(corner1X, corner1Y);
+    this.startHintArrow.lineTo(corner2X, corner2Y);
+    this.startHintArrow.lineTo(corner3X, corner3Y);
+    this.startHintArrow.lineTo(corner4X, corner4Y);
+    this.startHintArrow.closePath();
+    this.startHintArrow.fillPath();
+
+    // Triangle/polygon arrow head (taller tip)
+    const headAngle = Math.PI / 4; // 45 degrees
+
+    // Make the arrow head longer/taller by increasing the distance from tip to base
+    const headLength = arrowHead * 2; // Make it 80% longer for a more elongated tip
+
+    // Calculate the three points of the triangle arrow head
+    const tipX = endX + headLength / 2;
+    const tipY = endY + headLength / 2;
+
+    // Left point of triangle base
+    const leftX = endX - (headLength / 2) * Math.cos(headAngle - Math.PI / 3);
+    const leftY = endY - (headLength / 2) * Math.sin(headAngle - Math.PI / 3);
+
+    // Right point of triangle base
+    const rightX = endX - (headLength / 2) * Math.cos(headAngle + Math.PI / 3);
+    const rightY = endY - (headLength / 2) * Math.sin(headAngle + Math.PI / 3);
+
+    // Draw filled triangle arrow head
+    this.startHintArrow.beginPath();
+    this.startHintArrow.moveTo(tipX, tipY);
+    this.startHintArrow.lineTo(leftX, leftY);
+    this.startHintArrow.lineTo(rightX, rightY);
+    this.startHintArrow.closePath();
+    this.startHintArrow.fillPath();
+
+    this.startHintArrow.setPosition(arrowX, arrowY);
+
+    // Add oscillating animation (bigger movement to match larger arrow)
+    this.tweens.add({
+      targets: this.startHintArrow,
+      x: arrowX + Math.max(8, 12 * this.scaleFactor), // Increased oscillation
+      y: arrowY + Math.max(8, 12 * this.scaleFactor), // Increased oscillation
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+  }
+
+  private hideStartHintArrow() {
+    if (this.startHintArrow) {
+      this.tweens.killTweensOf(this.startHintArrow); // Stop any running animations
+      this.startHintArrow.destroy();
+      this.startHintArrow = null;
+    }
   }
 }
