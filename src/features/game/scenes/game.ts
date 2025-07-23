@@ -151,10 +151,19 @@ export class Game extends Scene {
   }
 
   private getResponsiveDimensions() {
+    // Calculate pole height based on number of discs with some extra space
+    const discStackHeight =
+      this.numDiscs * this.BASE_DISC_HEIGHT * this.scaleFactor;
+    const extraSpace = Math.max(40, 60 * this.scaleFactor); // Extra space above the highest disc
+    const dynamicPoleHeight = discStackHeight + extraSpace;
+
     return {
       towerWidth: this.BASE_TOWER_WIDTH * this.scaleFactor,
       towerHeight: this.BASE_TOWER_HEIGHT * this.scaleFactor,
-      poleHeight: this.BASE_POLE_HEIGHT * this.scaleFactor,
+      poleHeight: Math.max(
+        this.BASE_POLE_HEIGHT * this.scaleFactor,
+        dynamicPoleHeight,
+      ),
       discHeight: this.BASE_DISC_HEIGHT * this.scaleFactor,
       poleWidth: Math.max(6, 10 * this.scaleFactor),
       marginBottom: Math.max(50, 100 * this.scaleFactor),
