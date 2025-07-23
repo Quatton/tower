@@ -13,6 +13,7 @@ export class Game extends Scene {
   private selectedTower: number = -1;
   private towerBases: Phaser.GameObjects.Graphics[] = [];
   private towerPoles: Phaser.GameObjects.Graphics[] = [];
+  private towerIndicators: Phaser.GameObjects.Graphics[] = [];
   private moveCount: number = 0;
   private moveText!: Phaser.GameObjects.Text;
   private winText!: Phaser.GameObjects.Text;
@@ -118,6 +119,7 @@ export class Game extends Scene {
     // Clear existing objects
     this.towerBases.forEach((base) => base.destroy());
     this.towerPoles.forEach((pole) => pole.destroy());
+    this.towerIndicators.forEach((indicator) => indicator.destroy());
     this.towers.forEach((tower) => {
       tower.forEach((disc) => disc.graphics.destroy());
     });
@@ -125,6 +127,7 @@ export class Game extends Scene {
     // Reset arrays
     this.towerBases = [];
     this.towerPoles = [];
+    this.towerIndicators = [];
     this.towers = [[], [], []];
     this.selectedDisc = null;
     this.selectedTower = -1;
@@ -214,6 +217,11 @@ export class Game extends Scene {
         dimensions.poleHeight,
       );
       this.towerPoles.push(pole);
+
+      // Create tower indicator (initially hidden)
+      const indicator = this.add.graphics();
+      indicator.setVisible(false);
+      this.towerIndicators.push(indicator);
     }
   }
 
@@ -363,6 +371,9 @@ export class Game extends Scene {
       duration: 200,
       ease: "Power2",
     });
+
+    // Show move indicators
+    this.showMoveIndicators();
   }
 
   private moveDiscToTower(targetTower: number) {
@@ -473,6 +484,9 @@ export class Game extends Scene {
   }
 
   private deselectDisc() {
+    // Hide move indicators first
+    this.hideMoveIndicators();
+
     if (this.selectedDisc && this.selectedTower !== -1) {
       // Find the correct position for this disc in its current tower
       const currentTower = this.towers[this.selectedTower];
@@ -563,6 +577,7 @@ export class Game extends Scene {
     // Clear existing objects
     this.towerBases.forEach((base) => base.destroy());
     this.towerPoles.forEach((pole) => pole.destroy());
+    this.towerIndicators.forEach((indicator) => indicator.destroy());
     this.towers.forEach((tower) => {
       tower.forEach((disc) => disc.graphics.destroy());
     });
@@ -570,6 +585,7 @@ export class Game extends Scene {
     // Reset game state
     this.towerBases = [];
     this.towerPoles = [];
+    this.towerIndicators = [];
     this.towers = [[], [], []];
     this.selectedDisc = null;
     this.selectedTower = -1;
@@ -581,5 +597,74 @@ export class Game extends Scene {
     this.moveText.setText("Moves: 0");
     this.winText.setText("");
     this.winText.removeInteractive();
+  }
+
+  private showMoveIndicators() {
+    if (this.selectedDisc === null || this.selectedTower === -1) return;
+
+    const centerX = this.cameras.main.width / 2;
+    const dimensions = this.getResponsiveDimensions();
+    const indicatorSize = Math.max(20, 30 * this.scaleFactor);
+    const strokeWidth = Math.max(2, 3 * this.scaleFactor);
+
+    for (let i = 0; i < 3; i++) {
+      const towerX = centerX + (i - 1) * dimensions.towerSpacing;
+      const indicatorY =
+        this.cameras.main.height -
+        dimensions.marginBottom -
+        dimensions.poleHeight -
+        indicatorSize * 2;
+
+      const indicator = this.towerIndicators[i];
+      if (!indicator) continue;
+
+      indicator.clear();
+      indicator.setVisible(true);
+      indicator.setPosition(towerX, indicatorY);
+
+      const isValidMove = this.isValidMove(this.selectedTower, i);
+
+      if (isValidMove) {
+        // Draw green arrow (pointing down)
+        indicator.lineStyle(strokeWidth, 0x000000); // Black border
+        indicator.fillStyle(0x00ff00); // Green fill
+
+        // Arrow shape (pointing down) - fixed direction
+        indicator.beginPath();
+        indicator.moveTo(0, indicatorSize / 2); // Point at bottom
+        indicator.lineTo(-indicatorSize / 3, indicatorSize / 6);
+        indicator.lineTo(-indicatorSize / 6, indicatorSize / 6);
+        indicator.lineTo(-indicatorSize / 6, -indicatorSize / 2);
+        indicator.lineTo(indicatorSize / 6, -indicatorSize / 2);
+        indicator.lineTo(indicatorSize / 6, indicatorSize / 6);
+        indicator.lineTo(indicatorSize / 3, indicatorSize / 6);
+        indicator.closePath();
+        indicator.fillPath();
+        indicator.strokePath();
+      } else {
+        // Draw red X
+        indicator.lineStyle(strokeWidth, 0xff0000); // Red color
+
+        // Draw X lines
+        const halfSize = indicatorSize / 3;
+        indicator.beginPath();
+        indicator.moveTo(-halfSize, -halfSize);
+        indicator.lineTo(halfSize, halfSize);
+        indicator.moveTo(halfSize, -halfSize);
+        indicator.lineTo(-halfSize, halfSize);
+        indicator.strokePath();
+
+        // Add border circle
+        indicator.lineStyle(strokeWidth, 0x000000); // Black border
+        indicator.strokeCircle(0, 0, indicatorSize / 2);
+      }
+    }
+  }
+
+  private hideMoveIndicators() {
+    this.towerIndicators.forEach((indicator) => {
+      indicator.setVisible(false);
+      indicator.clear();
+    });
   }
 }
