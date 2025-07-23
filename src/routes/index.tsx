@@ -16,20 +16,14 @@ export default function Home() {
 
   return (
     <main className="h-dvh w-full overflow-hidden">
-      <div className="flex h-full w-full flex-col items-center justify-center bg-gray-100">
-        {/* Control Panel */}
-        <div className="z-10 mb-4 flex flex-wrap items-center justify-center gap-2 rounded-lg bg-white/90 p-3 shadow-md backdrop-blur-sm">
-          <span className="text-sm font-medium text-gray-700">
-            <Disc2 />
-          </span>
-          :
+      <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-gray-100 p-4">
+        <div className="z-10 flex flex-wrap items-center justify-center gap-2 rounded-lg bg-white/90 p-4 shadow-md backdrop-blur-sm">
           {[3, 4, 5, 6, 7, 8].map((num) => (
             <Button
               key={num}
               variant={numDiscs === num ? "default" : "outline"}
               size="sm"
               onClick={() => setNumDiscs(num)}
-              className="min-w-[2rem]"
             >
               {num}
             </Button>

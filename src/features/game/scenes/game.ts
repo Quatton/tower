@@ -21,7 +21,7 @@ export class Game extends Scene {
   private readonly BASE_TOWER_WIDTH = 160;
   private readonly BASE_TOWER_HEIGHT = 16;
   private readonly BASE_POLE_HEIGHT = 160;
-  private readonly BASE_DISC_HEIGHT = 16;
+  private readonly BASE_DISC_HEIGHT = 24; // Increased from 16 to 24
   private readonly DISC_COLORS = [
     0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xff8000,
     0x8000ff, 0x80ff00, 0xff0080,
@@ -229,12 +229,12 @@ export class Game extends Scene {
     // Create discs on the leftmost tower
     for (let i = 0; i < numDiscs; i++) {
       const discSize = numDiscs - i; // Largest disc at bottom
-      const discWidth = (30 + discSize * 25) * this.scaleFactor;
+      const discWidth = (50 + discSize * 35) * this.scaleFactor; // Increased from (30 + discSize * 25)
       const discY = baseY - i * dimensions.discHeight;
 
       const disc = this.add.graphics();
       const color = this.DISC_COLORS[i % this.DISC_COLORS.length];
-      const strokeWidth = Math.max(1, 2 * this.scaleFactor);
+      const strokeWidth = Math.max(2, 4 * this.scaleFactor);
 
       // Add stroke for better contrast
       disc.lineStyle(strokeWidth, 0x000000);
@@ -336,17 +336,33 @@ export class Game extends Scene {
     this.selectedDisc = topDisc;
     this.selectedTower = towerIndex;
 
-    // Visual feedback
+    // Visual feedback - use red stroke with same width as black stroke
     const dimensions = this.getResponsiveDimensions();
-    const strokeWidth = Math.max(2, 3 * this.scaleFactor);
-    const highlightSize = Math.max(40, 60 * this.scaleFactor);
+    const strokeWidth = Math.max(2, 4 * this.scaleFactor); // Same as disc stroke
+    const discSize = topDisc.size;
+    const discWidth = (50 + discSize * 35) * this.scaleFactor; // Updated to match createDiscs
 
-    topDisc.graphics.lineStyle(strokeWidth, 0xffffff);
-    topDisc.graphics.strokeRect(
-      -highlightSize,
+    // Clear and redraw the disc with red selection stroke
+    topDisc.graphics.clear();
+    topDisc.graphics.lineStyle(strokeWidth, 0xff0000); // Red stroke for selection
+    const color =
+      this.DISC_COLORS[(this.numDiscs - discSize) % this.DISC_COLORS.length];
+    if (color) {
+      topDisc.graphics.fillStyle(color);
+    }
+    topDisc.graphics.fillRoundedRect(
+      -discWidth / 2,
       -dimensions.discHeight / 2,
-      highlightSize * 2,
+      discWidth,
       dimensions.discHeight,
+      5 * this.scaleFactor,
+    );
+    topDisc.graphics.strokeRoundedRect(
+      -discWidth / 2,
+      -dimensions.discHeight / 2,
+      discWidth,
+      dimensions.discHeight,
+      5 * this.scaleFactor,
     );
 
     // Animate disc to top-center of screen
@@ -398,6 +414,38 @@ export class Game extends Scene {
       y: targetY,
       duration: 300,
       ease: "Power2",
+      onComplete: () => {
+        // Redraw the disc with normal black stroke after move
+        disc.graphics.clear();
+        const discSize = disc.size;
+        const discWidth = (50 + discSize * 35) * this.scaleFactor; // Updated to match createDiscs
+        const dimensions = this.getResponsiveDimensions();
+        const strokeWidth = Math.max(2, 4 * this.scaleFactor);
+        const color =
+          this.DISC_COLORS[
+            (this.numDiscs - discSize) % this.DISC_COLORS.length
+          ];
+
+        // Add normal black stroke
+        disc.graphics.lineStyle(strokeWidth, 0x000000);
+        if (color) {
+          disc.graphics.fillStyle(color);
+        }
+        disc.graphics.fillRoundedRect(
+          -discWidth / 2,
+          -dimensions.discHeight / 2,
+          discWidth,
+          dimensions.discHeight,
+          5 * this.scaleFactor,
+        );
+        disc.graphics.strokeRoundedRect(
+          -discWidth / 2,
+          -dimensions.discHeight / 2,
+          discWidth,
+          dimensions.discHeight,
+          5 * this.scaleFactor,
+        );
+      },
     });
 
     this.moveCount++;
@@ -465,9 +513,9 @@ export class Game extends Scene {
                 // Clear and redraw the disc without selection highlight
                 this.selectedDisc.graphics.clear();
                 const discSize = this.selectedDisc.size;
-                const discWidth = (30 + discSize * 25) * this.scaleFactor;
+                const discWidth = (50 + discSize * 35) * this.scaleFactor; // Updated to match createDiscs
                 const dimensions = this.getResponsiveDimensions();
-                const strokeWidth = Math.max(1, 2 * this.scaleFactor);
+                const strokeWidth = Math.max(2, 4 * this.scaleFactor);
                 const color =
                   this.DISC_COLORS[
                     (this.numDiscs - discSize) % this.DISC_COLORS.length
