@@ -155,6 +155,7 @@ export class Game extends Scene {
     const basePoleHeight = this.BASE_POLE_HEIGHT;
     const baseTowerHeight = this.BASE_TOWER_HEIGHT;
     const baseMarginBottom = 100; // Base margin at bottom
+    const labelSpaceBelow = 40; // Space below tower base for number labels
 
     // Height for disc stack (with some extra space above)
     const discStackHeight = this.numDiscs * baseDiscHeight;
@@ -178,9 +179,13 @@ export class Game extends Scene {
       spaceForStartHint +
       topPadding;
 
-    // Total required height (unscaled)
+    // Total required height (unscaled) - now includes space for labels below tower base
     return (
-      baseMarginBottom + baseTowerHeight + dynamicPoleHeight + totalUISpace
+      baseMarginBottom +
+      labelSpaceBelow +
+      baseTowerHeight +
+      dynamicPoleHeight +
+      totalUISpace
     );
   }
 
@@ -245,13 +250,17 @@ export class Game extends Scene {
     // Ensure minimum pole height for visual consistency
     const minPoleHeight = this.BASE_POLE_HEIGHT * this.scaleFactor;
 
+    // Include space for labels below tower base
+    const labelSpaceBelow = Math.max(30, 40 * this.scaleFactor); // Space for number labels
+    const baseMarginBottom = Math.max(50, 100 * this.scaleFactor);
+
     return {
       towerWidth: this.BASE_TOWER_WIDTH * this.scaleFactor,
       towerHeight: this.BASE_TOWER_HEIGHT * this.scaleFactor,
       poleHeight: Math.max(minPoleHeight, dynamicPoleHeight),
       discHeight: this.BASE_DISC_HEIGHT * this.scaleFactor,
       poleWidth: Math.max(6, 10 * this.scaleFactor),
-      marginBottom: Math.max(50, 100 * this.scaleFactor),
+      marginBottom: baseMarginBottom + labelSpaceBelow, // Now includes space for labels
       towerSpacing: this.getTowerSpacing(),
     };
   }
@@ -591,7 +600,7 @@ export class Game extends Scene {
         const strokeWidth = Math.max(2, 4 * this.scaleFactor);
         const color =
           this.DISC_COLORS[
-            (this.numDiscs - discSize) % this.DISC_COLORS.length
+            (this.numDiscs - discSize - 1) % this.DISC_COLORS.length
           ];
 
         // Add normal black stroke
