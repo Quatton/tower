@@ -522,12 +522,74 @@ export class Game extends Scene {
     const rightTower = this.towers[2];
     if (rightTower && rightTower.length === this.numDiscs) {
       this.winText.setText(
-        `You Won!\nMoves: ${this.moveCount}\nClick anywhere to restart`,
+        `🎉 You Won! 🎉\nMoves: ${this.moveCount}\n\nCongratulations!`,
       );
 
-      // Make the entire screen clickable for restart
-      this.input.off("pointerdown", this.handleClick, this);
-      this.input.on("pointerdown", () => {
+      // Create a restart button instead of making entire screen clickable
+      const buttonWidth = Math.max(120, 150 * this.scaleFactor);
+      const buttonHeight = Math.max(40, 50 * this.scaleFactor);
+      const buttonX = this.cameras.main.centerX;
+      const buttonY = this.cameras.main.height * 0.5; // More gap from win text
+
+      // Create button background
+      const restartButton = this.add.graphics();
+      restartButton.fillStyle(0x4f46e5); // Nice blue color
+      restartButton.fillRoundedRect(
+        -buttonWidth / 2,
+        -buttonHeight / 2,
+        buttonWidth,
+        buttonHeight,
+        8 * this.scaleFactor,
+      );
+      restartButton.setPosition(buttonX, buttonY);
+      restartButton.setInteractive(
+        new Phaser.Geom.Rectangle(
+          -buttonWidth / 2,
+          -buttonHeight / 2,
+          buttonWidth,
+          buttonHeight,
+        ),
+        Phaser.Geom.Rectangle.Contains,
+      );
+
+      // Add button text
+      const buttonText = this.add
+        .text(buttonX, buttonY, "Play Again", {
+          fontSize: `${Math.max(16, 20 * this.scaleFactor)}px`,
+          color: "#ffffff",
+          fontStyle: "bold",
+        })
+        .setOrigin(0.5);
+
+      // Button hover effects
+      restartButton.on("pointerover", () => {
+        restartButton.clear();
+        restartButton.fillStyle(0x3730a3); // Darker blue on hover
+        restartButton.fillRoundedRect(
+          -buttonWidth / 2,
+          -buttonHeight / 2,
+          buttonWidth,
+          buttonHeight,
+          8 * this.scaleFactor,
+        );
+      });
+
+      restartButton.on("pointerout", () => {
+        restartButton.clear();
+        restartButton.fillStyle(0x4f46e5); // Original blue
+        restartButton.fillRoundedRect(
+          -buttonWidth / 2,
+          -buttonHeight / 2,
+          buttonWidth,
+          buttonHeight,
+          8 * this.scaleFactor,
+        );
+      });
+
+      // Button click handler
+      restartButton.on("pointerdown", () => {
+        restartButton.destroy();
+        buttonText.destroy();
         this.scene.restart();
       });
     }

@@ -32,15 +32,13 @@ export default function Home() {
     }
   };
 
-  const handleFirstInteraction = async () => {
-    if (!hasRequestedFullscreen && !document.fullscreenElement) {
-      setHasRequestedFullscreen(true);
-      try {
-        await document.documentElement.requestFullscreen();
-        setIsFullscreen(true);
-      } catch (error) {
-        console.log("Auto fullscreen request failed:", error);
-      }
+  const handleEnterFullscreen = async () => {
+    setHasRequestedFullscreen(true);
+    try {
+      await document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } catch (error) {
+      console.log("Fullscreen request failed:", error);
     }
   };
 
@@ -115,16 +113,41 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Game Container */}
-        <div
-          className="h-full max-h-screen w-full"
-          onClick={handleFirstInteraction}
-          onTouchStart={handleFirstInteraction}
-        >
-          <ClientOnly>
-            <PhaserGame numDiscs={numDiscs} />
-          </ClientOnly>
-        </div>
+        {/* Fullscreen Prompt or Game */}
+        {!isFullscreen && !hasRequestedFullscreen ? (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-6 text-center">
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-gray-800">
+                Tower of Hanoi
+              </h2>
+              <p className="max-w-md text-gray-600">
+                For the best gaming experience, we recommend playing in
+                fullscreen mode.
+              </p>
+            </div>
+            <Button
+              size="lg"
+              onClick={handleEnterFullscreen}
+              className="px-8 py-3"
+            >
+              <Maximize className="mr-2 h-5 w-5" />
+              Play Fullscreen
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setHasRequestedFullscreen(true)}
+              className="text-sm"
+            >
+              Continue without fullscreen
+            </Button>
+          </div>
+        ) : (
+          <div className="h-full max-h-screen w-full">
+            <ClientOnly>
+              <PhaserGame numDiscs={numDiscs} />
+            </ClientOnly>
+          </div>
+        )}
       </div>
     </main>
   );
