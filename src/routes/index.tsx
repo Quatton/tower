@@ -56,12 +56,12 @@ export default function Home() {
   return (
     <main className="h-dvh w-full overflow-hidden">
       <div className="relative flex h-full w-full flex-col items-center justify-center gap-4 bg-gray-100">
-        <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 transform flex-wrap items-center justify-center gap-2 rounded-lg p-4 shadow-md backdrop-blur-sm">
+        <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 transform flex-wrap items-center justify-center gap-2 rounded-lg p-2 shadow-md backdrop-blur-sm">
           {[3, 4, 5, 6, 7, 8].map((num) => (
             <Button
               key={num}
               variant={numDiscs === num ? "default" : "outline"}
-              size="sm"
+              size="icon"
               onClick={() => setNumDiscs(num)}
             >
               {num}
