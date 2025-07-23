@@ -16,6 +16,7 @@ export class Game extends Scene {
   private towerBases: Phaser.GameObjects.Graphics[] = [];
   private towerPoles: Phaser.GameObjects.Graphics[] = [];
   private towerIndicators: Phaser.GameObjects.Graphics[] = [];
+  private towerLabels: Phaser.GameObjects.Text[] = [];
   private guideArrow: Phaser.GameObjects.Graphics | null = null;
   private moveCount: number = 0;
   private moveText!: Phaser.GameObjects.Text;
@@ -55,6 +56,9 @@ export class Game extends Scene {
     // Create start hint arrow
     this.createStartHintArrow();
 
+    // Show tower labels initially
+    this.showTowerLabels();
+
     // UI
     const fontSize = Math.max(16, 24 * this.scaleFactor);
     this.moveText = this.add.text(
@@ -77,8 +81,14 @@ export class Game extends Scene {
     // Input handling
     this.input.on("pointerdown", this.handleClick, this);
 
+    // Keyboard input handling
+    this.input.keyboard?.on("keydown", this.handleKeyDown, this);
+
     // Handle resize events
     this.scale.on("resize", this.handleResize, this);
+
+    // Handle scene shutdown for cleanup
+    this.events.on("shutdown", this.cleanup, this);
 
     EventBus.emit("current-scene-ready", this);
   }
@@ -198,6 +208,9 @@ export class Game extends Scene {
 
     // Recreate start hint arrow
     this.createStartHintArrow();
+
+    // Show tower labels
+    this.showTowerLabels();
 
     // Update UI positions
     const fontSize = Math.max(16, 24 * this.scaleFactor);
@@ -336,6 +349,23 @@ export class Game extends Scene {
       const indicator = this.add.graphics();
       indicator.setVisible(false);
       this.towerIndicators.push(indicator);
+
+      // Create tower keyboard label
+      const labelText = this.add
+        .text(
+          towerX,
+          positions.baseY +
+            dimensions.towerHeight +
+            Math.max(15, 20 * this.scaleFactor),
+          (i + 1).toString(),
+          {
+            fontSize: `${Math.max(14, 18 * this.scaleFactor)}px`,
+            color: "#666666",
+            fontStyle: "bold",
+          },
+        )
+        .setOrigin(0.5);
+      this.towerLabels.push(labelText);
     }
   }
 
@@ -486,6 +516,9 @@ export class Game extends Scene {
 
     // Hide start hint arrow after first selection
     this.hideStartHintArrow();
+
+    // Hide the default tower labels since we're now showing move indicators
+    this.hideTowerLabels();
 
     // Animate disc to calculated position to avoid overlaps
     const positions = this.getVerticalPositions();
@@ -740,6 +773,7 @@ export class Game extends Scene {
     this.createTowers();
     this.createDiscs(this.numDiscs);
     this.createStartHintArrow(); // Recreate start hint arrow
+    this.showTowerLabels(); // Show tower labels
     this.moveText.setText("Moves: 0");
     this.winText.setText("");
 
@@ -753,6 +787,7 @@ export class Game extends Scene {
     this.towerBases.forEach((base) => base.destroy());
     this.towerPoles.forEach((pole) => pole.destroy());
     this.towerIndicators.forEach((indicator) => indicator.destroy());
+    this.towerLabels.forEach((label) => label.destroy());
     if (this.guideArrow) {
       this.guideArrow.destroy();
       this.guideArrow = null;
@@ -778,6 +813,7 @@ export class Game extends Scene {
     this.towerBases = [];
     this.towerPoles = [];
     this.towerIndicators = [];
+    this.towerLabels = [];
   }
 
   private showMoveIndicators() {
@@ -794,13 +830,23 @@ export class Game extends Scene {
       const indicatorY = positions.indicatorY;
 
       const indicator = this.towerIndicators[i];
-      if (!indicator) continue;
+      const label = this.towerLabels[i];
+      if (!indicator || !label) continue;
+
+      const isValidMove = this.isValidMove(this.selectedTower, i);
+
+      // Show/hide and style the label based on move validity
+      if (isValidMove) {
+        label.setVisible(true);
+        label.setStyle({ color: "#00aa00", fontStyle: "bold" }); // Green for valid moves
+      } else {
+        label.setVisible(true);
+        label.setStyle({ color: "#aa0000", fontStyle: "bold" }); // Red for invalid moves
+      }
 
       indicator.clear();
       indicator.setVisible(true);
       indicator.setPosition(towerX, indicatorY);
-
-      const isValidMove = this.isValidMove(this.selectedTower, i);
 
       if (isValidMove) {
         // Draw green arrow (pointing down)
@@ -848,6 +894,9 @@ export class Game extends Scene {
       indicator.setVisible(false);
       indicator.clear();
     });
+
+    // Reset labels to default style and show them again
+    this.showTowerLabels();
   }
   private getVerticalPositions() {
     const dimensions = this.getResponsiveDimensions();
@@ -984,5 +1033,67 @@ export class Game extends Scene {
       this.startHintArrow.destroy();
       this.startHintArrow = null;
     }
+  }
+
+  private handleKeyDown(event: KeyboardEvent) {
+    // Map keys to tower indices
+    const keyToTower: { [key: string]: number } = {
+      "1": 0,
+      a: 0,
+      j: 0, // First tower (left)
+      "2": 1,
+      s: 1,
+      k: 1, // Second tower (middle)
+      "3": 2,
+      d: 2,
+      l: 2, // Third tower (right)
+    };
+
+    const key = event.key.toLowerCase();
+    const towerIndex = keyToTower[key];
+
+    // Only proceed if it's a valid key
+    if (towerIndex === undefined) return;
+
+    // Prevent default behavior for these keys
+    event.preventDefault();
+
+    // Handle the tower interaction (same logic as clicking)
+    if (this.selectedDisc === null) {
+      // Select a disc from the specified tower
+      this.selectDiscFromTower(towerIndex);
+    } else {
+      // Try to move the selected disc to the specified tower
+      this.moveDiscToTower(towerIndex);
+    }
+  }
+
+  private cleanup() {
+    // Clean up keyboard event listeners
+    if (this.input.keyboard) {
+      this.input.keyboard.off("keydown", this.handleKeyDown, this);
+    }
+  }
+
+  private showTowerLabels() {
+    // Show labels when no disc is selected to indicate which keys can be pressed
+    this.towerLabels.forEach((label, index) => {
+      const tower = this.towers[index];
+      if (tower && tower.length > 0) {
+        // Tower has discs - show label in green (can select)
+        label.setVisible(true);
+        label.setStyle({ color: "#00aa00", fontStyle: "bold" });
+      } else {
+        // Tower is empty - show label in gray (cannot select but visible for reference)
+        label.setVisible(true);
+        label.setStyle({ color: "#999999", fontStyle: "normal" });
+      }
+    });
+  }
+
+  private hideTowerLabels() {
+    this.towerLabels.forEach((label) => {
+      label.setVisible(false);
+    });
   }
 }
