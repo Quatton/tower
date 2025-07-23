@@ -14,6 +14,7 @@ export class Game extends Scene {
   private towerBases: Phaser.GameObjects.Graphics[] = [];
   private towerPoles: Phaser.GameObjects.Graphics[] = [];
   private towerIndicators: Phaser.GameObjects.Graphics[] = [];
+  private guideArrow: Phaser.GameObjects.Graphics | null = null;
   private moveCount: number = 0;
   private moveText!: Phaser.GameObjects.Text;
   private winText!: Phaser.GameObjects.Text;
@@ -182,6 +183,31 @@ export class Game extends Scene {
     const centerX = this.cameras.main.width / 2;
     const dimensions = this.getResponsiveDimensions();
     const baseY = this.cameras.main.height - dimensions.marginBottom;
+
+    // Create subtle guide arrow from first to last tower
+    const leftTowerX = centerX - dimensions.towerSpacing;
+    const rightTowerX = centerX + dimensions.towerSpacing;
+    const arrowY = baseY - dimensions.poleHeight - Math.max(40, 60 * this.scaleFactor); // Above all towers
+    
+    this.guideArrow = this.add.graphics();
+    this.guideArrow.lineStyle(Math.max(2, 3 * this.scaleFactor), 0xcccccc, 0.3); // Light gray, semi-transparent
+    
+    // Draw arrow line
+    this.guideArrow.beginPath();
+    this.guideArrow.moveTo(leftTowerX + dimensions.towerWidth / 3, arrowY);
+    this.guideArrow.lineTo(rightTowerX - dimensions.towerWidth / 3, arrowY);
+    this.guideArrow.strokePath();
+    
+    // Draw arrow head
+    const arrowHeadSize = Math.max(8, 12 * this.scaleFactor);
+    const arrowTipX = rightTowerX - dimensions.towerWidth / 3;
+    this.guideArrow.fillStyle(0xcccccc, 0.3); // Same color and opacity
+    this.guideArrow.beginPath();
+    this.guideArrow.moveTo(arrowTipX, arrowY);
+    this.guideArrow.lineTo(arrowTipX - arrowHeadSize, arrowY - arrowHeadSize / 2);
+    this.guideArrow.lineTo(arrowTipX - arrowHeadSize, arrowY + arrowHeadSize / 2);
+    this.guideArrow.closePath();
+    this.guideArrow.fillPath();
 
     for (let i = 0; i < 3; i++) {
       const towerX = centerX + (i - 1) * dimensions.towerSpacing;
@@ -525,6 +551,10 @@ export class Game extends Scene {
     this.towerBases.forEach((base) => base.destroy());
     this.towerPoles.forEach((pole) => pole.destroy());
     this.towerIndicators.forEach((indicator) => indicator.destroy());
+    if (this.guideArrow) {
+      this.guideArrow.destroy();
+      this.guideArrow = null;
+    }
     this.towers.forEach((tower) => {
       tower.forEach((disc) => disc.graphics.destroy());
     });
