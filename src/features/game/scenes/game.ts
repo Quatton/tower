@@ -746,7 +746,7 @@ export class Game extends Scene {
 
       // Add button text
       const buttonText = this.add
-        .text(buttonX, buttonY, "Play Again", {
+        .text(buttonX, buttonY, "🔄 Retry", {
           fontSize: `${Math.max(16, 20 * this.scaleFactor)}px`,
           color: "#ffffff",
           fontStyle: "bold",
