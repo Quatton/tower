@@ -28,18 +28,16 @@ export class Game extends Scene {
   private readonly BASE_TOWER_HEIGHT = 16;
   private readonly BASE_POLE_HEIGHT = 160;
   private readonly BASE_DISC_HEIGHT = 24; // Increased from 16 to 24
-  // Rainbow colors starting from yellow
+  // RGBCMYKW - High contrast colors for better visibility
   private readonly DISC_COLORS = [
-    0xffff00, // Yellow
-    0xff8000, // Orange
     0xff0000, // Red
-    0xff00ff, // Magenta
-    0x8000ff, // Violet
-    0x0000ff, // Blue
-    0x00ffff, // Cyan
+    0xffff00, // Yellow
     0x00ff00, // Green
-    0x80ff00, // Lime
-    0xff0080, // Pink
+    0x00ffff, // Cyan
+    0x0000ff, // Blue
+    0xff00ff, // Magenta
+    0xffffff, // White
+    0x111111, // Black
   ];
 
   constructor(numDiscs: number = 4) {
